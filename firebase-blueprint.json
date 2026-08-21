@@ -1,0 +1,47 @@
+{
+  "entities": {
+    "Trade": {
+      "title": "Trade",
+      "description": "A single trade transaction in the user's history",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "asset": { "type": "string" },
+        "action": { "type": "string", "enum": ["BUY", "SELL"] },
+        "amount": { "type": "number" },
+        "price": { "type": "number" },
+        "quantity": { "type": "number" },
+        "orderType": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "consentId": { "type": "string" }
+      },
+      "required": ["userId", "asset", "action", "amount", "price", "quantity", "orderType", "timestamp", "consentId"]
+    },
+    "Portfolio": {
+      "title": "Portfolio",
+      "description": "User portfolio holding current assets",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "cash": { "type": "number" },
+        "equity": { "type": "number" },
+        "mutualFunds": { "type": "number" },
+        "gold": { "type": "number" },
+        "crypto": { "type": "number" },
+        "silver": { "type": "number" },
+        "bonds": { "type": "number" }
+      },
+      "required": ["userId", "cash", "equity", "mutualFunds", "gold", "crypto", "silver", "bonds"]
+    }
+  },
+  "firestore": {
+    "users/{userId}/trades/{tradeId}": {
+      "schema": { "$ref": "#/entities/Trade" },
+      "description": "User's trade history"
+    },
+    "users/{userId}/portfolio/{portfolioId}": {
+      "schema": { "$ref": "#/entities/Portfolio" },
+      "description": "User's portfolio state"
+    }
+  }
+}

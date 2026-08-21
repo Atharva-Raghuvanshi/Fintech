@@ -1,0 +1,6 @@
+{
+  "name": "PWIS Command Center",
+  "description": "Personal Wealth Intelligence & Action Platform featuring real-time net worth tracking, compliant execution layer, and virtual CA advisory.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

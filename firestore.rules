@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidTrade(data) {
+      return data.keys().hasAll(['userId', 'asset', 'action', 'amount', 'price', 'quantity', 'orderType', 'timestamp', 'consentId'])
+        && data.userId is string
+        && data.asset is string
+        && data.action in ['BUY', 'SELL']
+        && data.amount is number
+        && data.price is number
+        && data.quantity is number
+        && data.orderType is string
+        && data.timestamp is number
+        && data.consentId is string;
+    }
+
+    function isValidPortfolio(data) {
+      return data.keys().hasAll(['userId', 'cash', 'equity', 'mutualFunds', 'gold', 'crypto', 'silver', 'bonds'])
+        && data.userId is string
+        && data.cash is number
+        && data.equity is number
+        && data.mutualFunds is number
+        && data.gold is number
+        && data.crypto is number
+        && data.silver is number
+        && data.bonds is number;
+    }
+
+    // Trade History rules
+    match /users/{userId}/trades/{tradeId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidTrade(request.resource.data) && request.resource.data.userId == userId;
+      allow update: if isOwner(userId) && isValidTrade(request.resource.data) && request.resource.data.userId == userId;
+      allow delete: if isOwner(userId);
+    }
+    
+    // Portfolio rules
+    match /users/{userId}/portfolio/{portfolioId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidPortfolio(request.resource.data) && request.resource.data.userId == userId;
+      allow update: if isOwner(userId) && isValidPortfolio(request.resource.data) && request.resource.data.userId == userId;
+      allow delete: if isOwner(userId);
+    }
+  }
+}
