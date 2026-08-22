@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, ReferenceLine } from 'recharts';
+import fs from 'fs';
+
+const content = `import React, { useState } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 import { ArrowUpRight, TrendingUp, Zap, Calendar as CalendarIcon, Target, AlertTriangle } from 'lucide-react';
 import { formatCurrency } from '../lib/utils';
 import { historicalNetWorth } from '../data';
@@ -60,10 +62,10 @@ export function Dashboard() {
   );
 
   return (
-    <div className="h-full grid grid-rows-3 gap-4 overflow-hidden pb-2">
+    <div className="h-full flex flex-col gap-4 overflow-hidden pb-2">
       {/* ROW 1: Hero Net Worth + Utility Rail */}
-      <div className="min-h-0 grid grid-cols-1 xl:grid-cols-12 gap-4">
-        <div className="xl:col-span-12 h-full min-h-0">
+      <div className="flex-[0.35] min-h-0 grid grid-cols-1 xl:grid-cols-12 gap-4">
+        <div className="xl:col-span-9 h-full min-h-0">
           <Card className="h-full flex flex-col justify-between relative overflow-hidden" noPadding>
             <div className="p-4 pb-0 flex justify-between items-start z-10 relative shrink-0">
               <div>
@@ -80,7 +82,7 @@ export function Dashboard() {
             
             <div className="flex-1 w-full min-h-0 mt-2">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={historicalNetWorth} margin={{ top: 20, right: 20, left: -20, bottom: 5 }}>
+                <AreaChart data={historicalNetWorth} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={ASSET_COLORS['Equity']} stopOpacity={0.3}/>
@@ -88,18 +90,12 @@ export function Dashboard() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                  <XAxis dataKey="date" tick={{ fill: '#6B7280', fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={8} minTickGap={20} />
-                  <YAxis domain={['auto', 'auto']} tick={{ fill: '#6B7280', fontSize: 10 }} tickFormatter={(val) => `${(val/100000).toFixed(0)}L`} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="date" hide />
+                  <YAxis domain={['auto', 'auto']} tick={{ fill: '#6B7280', fontSize: 10 }} tickFormatter={(val) => \`\${(val/100000).toFixed(0)}L\`} axisLine={false} tickLine={false} />
                   <RechartsTooltip 
                     formatter={(value: number) => formatCurrency(value)}
                     contentStyle={{ backgroundColor: '#17171A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '12px' }}
                     itemStyle={{ color: '#F5F5F7' }}
-                  />
-                  <ReferenceLine 
-                    y={6000000} 
-                    stroke="#6B7280" 
-                    strokeDasharray="4 4" 
-                    label={{ position: 'insideTopLeft', value: 'Target: ₹60L', fill: '#9CA3AF', fontSize: 10 }} 
                   />
                   <Area 
                     type="monotone" 
@@ -108,7 +104,6 @@ export function Dashboard() {
                     fillOpacity={1} 
                     fill="url(#colorValue)" 
                     strokeWidth={2}
-                    dot={{ r: 3, fill: '#17171A', stroke: ASSET_COLORS['Equity'], strokeWidth: 1.5 }}
                     activeDot={{ r: 4, fill: '#17171A', stroke: ASSET_COLORS['Equity'], strokeWidth: 2 }}
                   />
                 </AreaChart>
@@ -117,10 +112,40 @@ export function Dashboard() {
           </Card>
         </div>
         
+        <div className="xl:col-span-3 h-full min-h-0 flex flex-col gap-4">
+          <Card className="flex-[0.6] min-h-0 flex flex-col justify-between p-4">
+            <h4 className="text-[13px] text-text-secondary font-medium">Monthly Contrib</h4>
+            <div className="mt-auto">
+              <div className="flex items-baseline gap-2 mb-1">
+                <span className="text-[24px] font-mono text-text-primary tabular-nums tracking-tight">{formatCurrency(125000)}</span>
+              </div>
+              <div className="flex items-center gap-2 mt-1">
+                <StatusPill label="+4.2%" variant="positive" />
+                <span className="text-[11px] text-text-tertiary">vs last mo</span>
+              </div>
+            </div>
+            <div className="h-10 mt-3 -mx-1">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={historicalNetWorth.slice(-6)}>
+                  <Area type="step" dataKey="value" stroke={ASSET_COLORS['Cash']} fill={ASSET_COLORS['Cash']} fillOpacity={0.1} strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+          <Card className="flex-[0.4] min-h-0 flex items-center justify-between p-4">
+            <div className="flex items-center gap-3">
+              <CalendarIcon className="w-5 h-5 text-primary" />
+              <div>
+                <div className="text-[12px] text-text-primary font-medium">Next SIP in 3d</div>
+                <div className="text-[11px] text-text-tertiary">{formatCurrency(25000)} total</div>
+              </div>
+            </div>
+          </Card>
         </div>
+      </div>
 
       {/* ROW 2: Allocation, AI, Rebalancer */}
-      <div className="min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="flex-[0.35] min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Allocation Donut */}
         <div className="lg:col-span-4 h-full min-h-0">
           <Card className="h-full flex flex-col p-4">
@@ -213,12 +238,12 @@ export function Dashboard() {
                     </div>
                     <div className="h-1.5 bg-black/40 rounded-full flex relative border border-white/5">
                       {/* Target marker (vertical white line) */}
-                      <div className="absolute top-[-2px] bottom-[-2px] w-0.5 bg-white z-10 rounded-full" style={{ left: `${data.target}%` }} />
+                      <div className="absolute top-[-2px] bottom-[-2px] w-0.5 bg-white z-10 rounded-full" style={{ left: \`\${data.target}%\` }} />
                       
                       {/* Current bar */}
                       <div 
-                        className={`h-full rounded-full ${isOver ? 'bg-primary' : 'bg-white/40'}`} 
-                        style={{ width: `${data.current}%` }} 
+                        className={\`h-full rounded-full \${isOver ? 'bg-primary' : 'bg-text-tertiary'}\`} 
+                        style={{ width: \`\${data.current}%\` }} 
                       />
                     </div>
                   </div>
@@ -233,7 +258,7 @@ export function Dashboard() {
       </div>
 
       {/* ROW 3: Quick Trade, Trades, Goals */}
-      <div className="min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="flex-[0.3] min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Quick Trade */}
         <div className="lg:col-span-3 h-full min-h-0">
           <Card className="h-full flex flex-col p-4">
@@ -284,7 +309,7 @@ export function Dashboard() {
                     <tr key={trade.id} className="border-b border-white/5 hover:bg-white/5 transition-colors group">
                       <td className="py-2 px-2 text-text-primary font-medium">{trade.asset}</td>
                       <td className="py-2 px-2">
-                        <span className={`text-[10px] font-medium ${trade.type === 'BUY' ? 'text-positive' : 'text-negative'}`}>{trade.type}</span>
+                        <span className={\`text-[10px] font-medium \${trade.type === 'BUY' ? 'text-positive' : 'text-negative'}\`}>{trade.type}</span>
                       </td>
                       <td className="py-2 px-2 text-right font-mono tabular-nums text-text-secondary">{formatCurrency(trade.amount)}</td>
                       <td className="py-2 px-2 text-right">
@@ -312,7 +337,7 @@ export function Dashboard() {
                       <span className="text-[11px] font-mono text-text-secondary tabular-nums">{percent}%</span>
                     </div>
                     <div className="h-1 bg-black/40 rounded-full overflow-hidden mb-1">
-                      <div className="h-full bg-primary rounded-full" style={{ width: `${percent}%` }} />
+                      <div className="h-full bg-primary rounded-full" style={{ width: \`\${percent}%\` }} />
                     </div>
                     <div className="flex justify-between text-[10px] font-mono text-text-tertiary tabular-nums">
                       <span>{formatCurrency(goal.current)}</span>
@@ -328,3 +353,6 @@ export function Dashboard() {
     </div>
   );
 }
+`;
+
+fs.writeFileSync('src/components/Dashboard.tsx', content);

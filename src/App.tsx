@@ -54,10 +54,10 @@ function AppContent() {
     <BrowserRouter>
       <div className="flex h-screen overflow-hidden bg-base text-text-primary">
         <Sidebar />
-        <div className="flex-1 ml-[220px] flex flex-col overflow-hidden" key={privacyToggleRender}>
+        <div className="flex-1 ml-[64px] flex flex-col overflow-hidden" key={privacyToggleRender}>
           <Topbar />
-          <main className="flex-1 overflow-y-auto">
-            <div className="max-w-[1600px] mx-auto p-6">
+          <main className="flex-1 overflow-hidden">
+            <div className="max-w-[1600px] mx-auto p-4 h-full">
               <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/banking" element={<BankTransactions />} />

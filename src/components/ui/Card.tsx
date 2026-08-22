@@ -20,9 +20,9 @@ export function SectionHeader({ title, action, subtitle }: { title: string, acti
   );
 }
 
-export function KpiCard({ title, value, trend, suffix = '' }: { title: string, value: string | number, trend?: { value: number, isPositive: boolean, label?: string }, suffix?: string }) {
+export function KpiCard({ title, value, trend, suffix = '', className = '' }: { title: string, value: string | number, trend?: { value: number, isPositive: boolean, label?: string }, suffix?: string, className?: string }) {
   return (
-    <Card className="flex flex-col justify-between min-h-[120px]">
+    <Card className={`flex flex-col justify-between min-h-[120px] ${className}`}>
       <h4 className="text-[13px] text-text-secondary font-medium">{title}</h4>
       <div className="mt-auto">
         <div className="flex items-baseline gap-2">
