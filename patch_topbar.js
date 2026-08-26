@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import fs from 'fs';
+
+const content = `import React, { useState, useEffect, useRef } from 'react';
 import { Search, Bell, Calendar, TrendingUp, History, Bot, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { PeriodToggle } from './ui/Card';
@@ -145,3 +147,6 @@ export function Topbar() {
     </header>
   );
 }
+`;
+
+fs.writeFileSync('src/components/Topbar.tsx', content);

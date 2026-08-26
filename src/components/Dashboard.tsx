@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, ReferenceLine } from 'recharts';
 import { ArrowUpRight, TrendingUp, Zap, Calendar as CalendarIcon, Target, AlertTriangle } from 'lucide-react';
 import { formatCurrency } from '../lib/utils';
 import { historicalNetWorth } from '../data';
 import type { Portfolio } from '../types';
 import { Card, SectionHeader, KpiCard, StatusPill, PeriodToggle } from './ui/Card';
+import { insertAppData } from '../lib/supabaseActions';
+import { useAuth } from '../contexts/AuthContext';
 import { ASSET_COLORS, getAssetColor } from '../lib/assetColors';
 
 // Mock Data
@@ -16,7 +19,6 @@ const mockPortfolio: Portfolio = {
   crypto: 420000,
   silver: 150000,
   bonds: 500000,
-  totalNetWorth: 10470000
 };
 
 const recentTrades = [
@@ -38,9 +40,77 @@ const rebalanceData = [
   { asset: 'Bonds', target: 20, current: 21.9 },
 ];
 
+const generateNetWorthData = (period: string, currentTotal: number) => {
+  const now = new Date();
+  const data = [];
+  let points = 12;
+  let startValue = 4200000;
+  let volatility = 100000;
+  let trend = 50000;
+
+  if (period === '1W') { points = 7; startValue = currentTotal * 0.98; volatility = 50000; trend = 30000; }
+  else if (period === '1M') { points = 30; startValue = currentTotal * 0.92; volatility = 80000; trend = 20000; }
+  else if (period === '3M') { points = 90; startValue = currentTotal * 0.85; volatility = 100000; trend = 25000; }
+  else if (period === '1Y') { points = 12; startValue = currentTotal * 0.70; volatility = 150000; trend = 100000; }
+  else if (period === 'ALL') { points = 60; startValue = currentTotal * 0.30; volatility = 300000; trend = 80000; }
+
+  let currentVal = startValue;
+  for (let i = 0; i < points; i++) {
+    const d = new Date(now);
+    let dateStr = '';
+    
+    if (period === '1W' || period === '1M' || period === '3M') {
+      d.setDate(d.getDate() - (points - 1 - i));
+      dateStr = `${d.getDate()} ${d.toLocaleString('default', { month: 'short' })}`;
+    } else if (period === '1Y') {
+      d.setMonth(d.getMonth() - (points - 1 - i));
+      dateStr = `${d.toLocaleString('default', { month: 'short' })} '${d.getFullYear().toString().substr(2,2)}`;
+    } else if (period === 'ALL') {
+      d.setMonth(d.getMonth() - (points - 1 - i));
+      dateStr = `${d.getFullYear()}`;
+    }
+
+    data.push({
+      date: dateStr,
+      value: Math.round(currentVal)
+    });
+    currentVal += trend + (Math.random() - 0.4) * volatility;
+  }
+  
+  // Tie the final data point to the exact current portfolio value
+  data[data.length - 1].value = currentTotal;
+  return data;
+};
+
 export function Dashboard() {
+  const [heroPeriod, setHeroPeriod] = useState('1M');
   const [tradeAsset, setTradeAsset] = useState('NIFTYBEES');
   const [tradeAmount, setTradeAmount] = useState('10000');
+
+  const { user } = useAuth();
+  const [isTrading, setIsTrading] = useState(false);
+
+  const handleQuickTrade = async (action: 'BUY' | 'SELL') => {
+    if (!user || !tradeAsset || !tradeAmount) return;
+    setIsTrading(true);
+    try {
+      await insertAppData({
+        user_id: user.uid,
+        type: action,
+        asset: tradeAsset,
+        amount: Number(tradeAmount),
+        order_type: 'Market',
+        source: 'Quick Trade'
+      });
+      // Optionally reset
+      setTradeAmount('');
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsTrading(false);
+    }
+  };
+
   
   const pieData = Object.entries(mockPortfolio)
     .filter(([key, val]) => key !== 'totalNetWorth' && typeof val === 'number' && val > 0)
@@ -51,6 +121,7 @@ export function Dashboard() {
     .sort((a, b) => b.value - a.value);
 
   const total = pieData.reduce((acc, curr) => acc + curr.value, 0);
+  const chartData = React.useMemo(() => generateNetWorthData(heroPeriod, total), [heroPeriod, total]);
 
   const LiveBadge = () => (
     <div className="flex items-center gap-1.5 px-2 py-0.5 bg-white/5 rounded border border-white/10">
@@ -63,7 +134,12 @@ export function Dashboard() {
     <div className="h-full grid grid-rows-3 gap-4 overflow-hidden pb-2">
       {/* ROW 1: Hero Net Worth + Utility Rail */}
       <div className="min-h-0 grid grid-cols-1 xl:grid-cols-12 gap-4">
-        <div className="xl:col-span-12 h-full min-h-0">
+        <motion.div 
+          className="xl:col-span-12 h-full min-h-0"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
           <Card className="h-full flex flex-col justify-between relative overflow-hidden" noPadding>
             <div className="p-4 pb-0 flex justify-between items-start z-10 relative shrink-0">
               <div>
@@ -75,12 +151,12 @@ export function Dashboard() {
                   <StatusPill label="+12.4%" variant="positive" />
                 </div>
               </div>
-              <PeriodToggle options={['1W', '1M', '3M', '1Y', 'ALL']} active="1M" onChange={() => {}} />
+              <PeriodToggle options={['1W', '1M', '3M', '1Y', 'ALL']} active={heroPeriod} onChange={setHeroPeriod} />
             </div>
             
             <div className="flex-1 w-full min-h-0 mt-2">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={historicalNetWorth} margin={{ top: 20, right: 20, left: -20, bottom: 5 }}>
+                <AreaChart data={chartData} margin={{ top: 20, right: 20, left: -20, bottom: 5 }}>
                   <defs>
                     <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={ASSET_COLORS['Equity']} stopOpacity={0.3}/>
@@ -115,14 +191,19 @@ export function Dashboard() {
               </ResponsiveContainer>
             </div>
           </Card>
-        </div>
+        </motion.div>
         
         </div>
 
       {/* ROW 2: Allocation, AI, Rebalancer */}
       <div className="min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Allocation Donut */}
-        <div className="lg:col-span-4 h-full min-h-0">
+        <motion.div 
+          className="lg:col-span-4 h-full min-h-0"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+        >
           <Card className="h-full flex flex-col p-4">
             <SectionHeader title="Asset Allocation" action={<LiveBadge />} />
             
@@ -165,10 +246,15 @@ export function Dashboard() {
               </div>
             </div>
           </Card>
-        </div>
+        </motion.div>
 
         {/* AI Insight Teaser */}
-        <div className="lg:col-span-4 h-full min-h-0">
+        <motion.div 
+          className="lg:col-span-4 h-full min-h-0"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.15 }}
+        >
           <Card className="h-full flex flex-col bg-gradient-to-br from-surface to-elevated p-4">
             <SectionHeader title="Virtual CA Insights" />
             <div className="flex-1 flex flex-col gap-3 mt-1 min-h-0">
@@ -193,10 +279,15 @@ export function Dashboard() {
                </button>
             </div>
           </Card>
-        </div>
+        </motion.div>
 
         {/* Rebalancer */}
-        <div className="lg:col-span-4 h-full min-h-0">
+        <motion.div 
+          className="lg:col-span-4 h-full min-h-0"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+        >
           <Card className="h-full flex flex-col p-4">
             <SectionHeader title="Rebalancer" />
             <div className="flex-1 flex flex-col gap-3 mt-1 overflow-y-auto scrollbar-hide min-h-0">
@@ -229,13 +320,18 @@ export function Dashboard() {
               Review Proposed Trades
             </button>
           </Card>
-        </div>
+        </motion.div>
       </div>
 
       {/* ROW 3: Quick Trade, Trades, Goals */}
       <div className="min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Quick Trade */}
-        <div className="lg:col-span-3 h-full min-h-0">
+        <motion.div 
+          className="lg:col-span-3 h-full min-h-0"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+        >
           <Card className="h-full flex flex-col p-4">
             <SectionHeader title="Quick Trade" />
             <div className="space-y-3 mt-1 flex-1 min-h-0 overflow-y-auto scrollbar-hide">
@@ -259,14 +355,33 @@ export function Dashboard() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-3 shrink-0">
-              <button className="py-1 border border-negative/30 bg-negative/10 text-negative rounded-md text-[12px] font-medium hover:bg-negative/20 transition-colors">Sell</button>
-              <button className="py-1 bg-positive/90 text-white rounded-md text-[12px] font-medium hover:bg-positive transition-colors">Buy</button>
+              <button 
+    onClick={() => handleQuickTrade('SELL')}
+    disabled={isTrading}
+    className="py-1 border border-negative/30 bg-negative/10 text-negative rounded-md text-[12px] font-medium hover:bg-negative/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+  >
+    {isTrading && <div className="w-3 h-3 rounded-full border-2 border-negative border-t-transparent animate-spin" />}
+    Sell
+  </button>
+              <button 
+    onClick={() => handleQuickTrade('BUY')}
+    disabled={isTrading}
+    className="py-1 bg-positive/90 text-white rounded-md text-[12px] font-medium hover:bg-positive transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+  >
+    {isTrading && <div className="w-3 h-3 rounded-full border-2 border-white border-t-transparent animate-spin" />}
+    Buy
+  </button>
             </div>
           </Card>
-        </div>
+        </motion.div>
 
         {/* Recent Trades Table */}
-        <div className="lg:col-span-5 h-full min-h-0">
+        <motion.div 
+          className="lg:col-span-5 h-full min-h-0"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.25 }}
+        >
           <Card className="h-full flex flex-col p-4">
             <SectionHeader title="Recent Activity" action={<button className="text-[11px] text-primary hover:underline">View all</button>} />
             <div className="mt-1 flex-1 overflow-y-auto scrollbar-hide -mx-2 min-h-0">
@@ -296,10 +411,15 @@ export function Dashboard() {
               </table>
             </div>
           </Card>
-        </div>
+        </motion.div>
 
         {/* Goals Progress Strip */}
-        <div className="lg:col-span-4 h-full min-h-0">
+        <motion.div 
+          className="lg:col-span-4 h-full min-h-0"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+        >
           <Card className="h-full flex flex-col p-4">
             <SectionHeader title="Active Goals" action={<button className="text-[11px] text-primary hover:underline">Manage</button>} />
             <div className="mt-1 flex-1 flex flex-col gap-2 overflow-y-auto scrollbar-hide min-h-0 pr-1">
@@ -323,7 +443,7 @@ export function Dashboard() {
               })}
             </div>
           </Card>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

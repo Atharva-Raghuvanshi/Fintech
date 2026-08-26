@@ -14,6 +14,8 @@ import type { Portfolio, AuditLogEntry } from '../types';
 import { doc, runTransaction, collection, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../contexts/AuthContext";
+import { insertAppData } from '../lib/supabaseActions';
+
 
 // Mock Data Generators
 const generateChartData = (volatility: number = 10, trend: number = 0) => {
@@ -99,8 +101,24 @@ export function ExecutionLayer() {
     e.preventDefault();
     if (!portfolio || !user) return;
     setStatus({ type: "loading", msg: "Executing ACID Transaction..." });
+
+
+
     
     const totalAmount = Number(quantity) * (orderType === "Market" ? currentPrice : Number(price));
+    try {
+      await insertAppData({
+        user_id: user.uid,
+        type: action,
+        asset: activeAsset,
+        amount: totalAmount,
+        order_type: orderType,
+        quantity: Number(quantity),
+        price: orderType === "Market" ? currentPrice : Number(price)
+      });
+    } catch (e) {
+      console.error("Supabase insert failed", e);
+    }
     try {
       await runTransaction(db, async (transaction) => {
         const portfolioRef = doc(db, "users", user.uid, "portfolio", "main");

@@ -1,4 +1,4 @@
-import { initializeApp, FirebaseApp } from 'firebase/app';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, Auth, onAuthStateChanged, User } from 'firebase/auth';
 import { getFirestore, Firestore, initializeFirestore } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -15,9 +15,13 @@ let cachedAccessToken: string | null = null;
 let isSigningIn = false;
 
 if (firebaseConfig.apiKey) {
-  app = initializeApp(firebaseConfig);
+  if (getApps().length === 0) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = getApp();
+  }
   auth = getAuth(app);
-  db = initializeFirestore(app, { experimentalForceLongPolling: true }, firestoreDatabaseId || undefined);
+  db = getFirestore(app, firestoreDatabaseId || undefined);
   
   onAuthStateChanged(auth, (user: User | null) => {
     if (user) {

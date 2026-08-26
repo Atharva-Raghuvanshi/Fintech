@@ -12,7 +12,7 @@ export function Login() {
           <ShieldCheck className="w-8 h-8" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Sign in to PWIS</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Sign in to Dhan Drishti</h1>
           <p className="text-slate-500 mt-2 text-sm">Securely connect to your private wealth management portal.</p>
         </div>
         <button

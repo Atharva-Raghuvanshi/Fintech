@@ -1,10 +1,27 @@
-const fs = require('fs');
-const content = fs.readFileSync('src/lib/firebase.ts', 'utf-8');
-const newContent = content.replace(
-  "import { getFirestore, Firestore } from 'firebase/firestore';",
-  "import { getFirestore, Firestore, initializeFirestore } from 'firebase/firestore';"
-).replace(
-  "db = getFirestore(app, firestoreDatabaseId || undefined);",
-  "db = initializeFirestore(app, { experimentalForceLongPolling: true }, firestoreDatabaseId || undefined);"
+import fs from 'fs';
+
+let content = fs.readFileSync('src/lib/firebase.ts', 'utf-8');
+
+content = content.replace(
+  "import { initializeApp, FirebaseApp } from 'firebase/app';",
+  "import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';"
 );
-fs.writeFileSync('src/lib/firebase.ts', newContent);
+
+const initBlock = `if (firebaseConfig.apiKey) {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = initializeFirestore(app, { experimentalForceLongPolling: true }, firestoreDatabaseId || undefined);`;
+
+const newInitBlock = `if (firebaseConfig.apiKey) {
+  if (getApps().length === 0) {
+    app = initializeApp(firebaseConfig);
+    db = initializeFirestore(app, { experimentalForceLongPolling: true }, firestoreDatabaseId || undefined);
+  } else {
+    app = getApp();
+    db = getFirestore(app, firestoreDatabaseId || undefined);
+  }
+  auth = getAuth(app);`;
+
+content = content.replace(initBlock, newInitBlock);
+
+fs.writeFileSync('src/lib/firebase.ts', content);

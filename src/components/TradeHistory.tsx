@@ -7,6 +7,8 @@ import { collection, query, orderBy, onSnapshot, doc, writeBatch } from 'firebas
 import { db } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { formatCurrency, cn } from '../lib/utils';
+import { fetchAppData } from '../lib/supabaseActions';
+
 import { History, Briefcase, Activity, ArrowUpRight, ArrowDownRight, Database } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -18,17 +20,28 @@ export function TradeHistory() {
   const [portfolio, setPortfolio] = useState<any | null>(null);
   const [isSeeding, setIsSeeding] = useState(false);
 
+  
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    if (!user || !db) return;
+    if (!user) return;
 
-    // Listen to Trades
-    const tradesRef = collection(db, 'users', user.uid, 'trades');
-    const q = query(tradesRef, orderBy('timestamp', 'desc'));
-    const unsubscribeTrades = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setTrades(data);
-    });
+    const loadSupabaseData = async () => {
+      try {
+        setIsLoading(true);
+        const data = await fetchAppData();
+        // data contains the rows from app_data table
+        setTrades(data || []);
+      } catch(e) {
+        console.error(e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
+    loadSupabaseData();
+
+    if (!db) return;
     // Listen to Portfolio
     const portfolioRef = doc(db, 'users', user.uid, 'portfolio', 'main');
     const unsubscribePortfolio = onSnapshot(portfolioRef, (docSnap) => {
@@ -37,11 +50,23 @@ export function TradeHistory() {
       }
     });
 
-    return () => {
-      unsubscribeTrades();
+    
+  if (isLoading) {
+    return (
+      <div className="flex-1 p-8 flex items-center justify-center">
+        <div className="flex flex-col items-center text-indigo-600">
+          <div className="w-8 h-8 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin mb-4" />
+          <h2 className="text-xl font-bold animate-pulse">Syncing with Supabase...</h2>
+        </div>
+      </div>
+    );
+  }
+
+  return () => {
       unsubscribePortfolio();
     };
   }, [user]);
+
 
   const handleSeedData = async () => {
     if (!user || !db) return;
@@ -140,13 +165,19 @@ export function TradeHistory() {
   };
 
   // Aggregate daily trade volume for chart
+  
   const volumeData = React.useMemo(() => {
     if (!trades.length) return [];
     
     // Sort chronologically for chart
-    const chronological = [...trades].sort((a, b) => a.timestamp - b.timestamp);
+    const chronological = [...trades].sort((a, b) => {
+      const timeA = a.created_at ? new Date(a.created_at).getTime() : a.timestamp;
+      const timeB = b.created_at ? new Date(b.created_at).getTime() : b.timestamp;
+      return timeA - timeB;
+    });
     const grouped = chronological.reduce((acc, trade) => {
-      const date = new Date(trade.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      const ts = trade.created_at ? new Date(trade.created_at).getTime() : trade.timestamp;
+      const date = new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       if (!acc[date]) acc[date] = 0;
       acc[date] += trade.amount;
       return acc;
@@ -154,6 +185,7 @@ export function TradeHistory() {
     
     return Object.entries(grouped).map(([date, volume]) => ({ date, volume }));
   }, [trades]);
+
 
   const pieData = portfolio ? [
     { name: 'Equity', value: portfolio.equity || 0 },
@@ -293,9 +325,9 @@ export function TradeHistory() {
             </thead>
             <tbody className="divide-y divide-slate-50">
               {trades.map((trade) => (
-                <tr key={trade.id} className="hover:bg-slate-50/50 transition-colors">
+                <tr key={trade.id || Math.random()} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap text-slate-500 text-xs">
-                    {new Date(trade.timestamp).toLocaleString()}
+                    {new Date(trade.created_at ? trade.created_at : trade.timestamp).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 font-medium text-slate-900">
                     {trade.asset}
@@ -316,7 +348,7 @@ export function TradeHistory() {
                   </td>
                   <td className="px-6 py-4">
                     <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs font-medium">
-                      {trade.orderType}
+                      {trade.order_type || trade.orderType}
                     </span>
                   </td>
                 </tr>
