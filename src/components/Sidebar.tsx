@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { 
+import {  
   LayoutDashboard, 
   ArrowRightLeft, 
   Calculator, 
@@ -15,9 +15,9 @@ import {
   History,
   Database,
   FileSpreadsheet,
-  Menu,
+  Hexagon, Menu,
   X
-} from 'lucide-react';
+ } from 'lucide-react';
 import { cn, togglePrivacyMode, isPrivacyMode } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -64,24 +64,17 @@ export function Sidebar() {
         <div className="h-16 border-b border-white/5 flex items-center justify-center px-4 shrink-0">
           {isOpen ? (
             <div className="flex items-center justify-between w-full">
-              <div className="bg-transparent flex items-center h-8">
-                <img 
-                  src="/Ams Bhumi_preview_bg.png" 
-                  alt="Dhan Drishti Logo" 
-                  className="h-8 w-auto object-contain brightness-0 invert" 
-                />
+              <div className="flex items-center gap-3">
+                <Hexagon className="w-7 h-7 text-emerald-400" />
+                <span className="text-xl font-extrabold tracking-tight text-white">Dhan Drishti</span>
               </div>
               <button onClick={() => setIsOpen(false)} className="text-text-tertiary hover:text-text-primary">
                 <X className="w-4 h-4" />
               </button>
             </div>
           ) : (
-            <button onClick={() => setIsOpen(true)} className="flex items-center justify-center w-8 h-8 hover:opacity-90 transition-opacity bg-transparent overflow-hidden">
-              <img 
-                src="/Ams Bhumi_preview_bg.png" 
-                alt="Dhan Drishti Logo" 
-                className="h-8 w-auto object-contain brightness-0 invert max-w-none" 
-              />
+            <button onClick={() => setIsOpen(true)} className="flex items-center justify-center w-8 h-8 hover:opacity-90 transition-opacity text-emerald-400">
+              <Hexagon className="w-7 h-7" />
             </button>
           )}
         </div>
