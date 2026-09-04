@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Sidebar } from './components/Sidebar';
 import { Topbar } from './components/Topbar';
 import { Dashboard } from './components/Dashboard';
@@ -89,6 +90,7 @@ export default function App() {
   return (
     <AuthProvider>
       <AppContent />
+      <SpeedInsights />
     </AuthProvider>
   );
 }
