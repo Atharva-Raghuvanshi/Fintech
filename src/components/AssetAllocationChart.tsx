@@ -55,8 +55,8 @@ export function AssetAllocationChart({ portfolio }: { portfolio: Portfolio }) {
   }, [pieData]);
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col">
-      <div className="p-6 border-b border-slate-100">
+    <div className="glass-panel flex flex-col">
+      <div className="p-6 border-b border-white/5">
         <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-6">Asset Allocation Overview</h3>
         
         {totalNetWorth === 0 ? (
@@ -68,7 +68,7 @@ export function AssetAllocationChart({ portfolio }: { portfolio: Portfolio }) {
             <div className="h-48 w-48 flex-shrink-0">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie
+                  <Pie isAnimationActive={true} animationDuration={1500}
                     data={pieData}
                     innerRadius={65}
                     outerRadius={85}
@@ -92,12 +92,12 @@ export function AssetAllocationChart({ portfolio }: { portfolio: Portfolio }) {
               {pieData.map((item, i) => (
                 <div key={item.name} className="flex justify-between items-center text-sm">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                    <div className="w-3 h-3 rounded-full shadow-md shadow-black/20" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
                     <span className="text-slate-600 font-medium">{item.name}</span>
                   </div>
                   <div className="text-right flex items-center gap-4">
-                    <div className="font-medium text-slate-900">{formatCurrency(item.value)}</div>
-                    <div className="text-xs text-slate-500 font-semibold w-8 text-right bg-slate-50 py-0.5 px-1.5 rounded">
+                    <div className="font-medium text-white">{formatCurrency(item.value)}</div>
+                    <div className="text-xs text-slate-400 font-semibold w-8 text-right bg-white/5 py-0.5 px-1.5 rounded">
                       {Math.round((item.value / totalNetWorth) * 100)}%
                     </div>
                   </div>
@@ -134,7 +134,7 @@ export function AssetAllocationChart({ portfolio }: { portfolio: Portfolio }) {
                   contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
                 />
                 {pieData.map((item, i) => (
-                  <Line 
+                  <Line isAnimationActive={true} animationDuration={1500}  
                     key={item.name}
                     type="monotone" 
                     dataKey={item.name} 

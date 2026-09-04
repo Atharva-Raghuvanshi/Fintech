@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 
 export async function insertAppData(data: any) {
   const { error } = await supabase
-    .from('app_data')
+    .from('trade_history')
     .insert([data]);
   
   if (error) {
@@ -13,7 +13,7 @@ export async function insertAppData(data: any) {
 
 export async function fetchAppData() {
   const { data, error } = await supabase
-    .from('app_data')
+    .from('trade_history')
     .select('*')
     .order('created_at', { ascending: false });
     

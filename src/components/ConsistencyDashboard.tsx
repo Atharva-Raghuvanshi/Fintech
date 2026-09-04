@@ -103,18 +103,18 @@ export function ConsistencyDashboard() {
     <div className="max-w-6xl mx-auto p-8 space-y-8">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-            <Database className="w-6 h-6 text-indigo-600" />
+          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+            <Database className="w-6 h-6 text-indigo-400" />
             Database Consistency & ACID Audit
           </h1>
-          <p className="text-slate-500 mt-1 max-w-2xl">
+          <p className="text-slate-400 mt-1 max-w-2xl">
             Real-time verification engine tracking atomic transaction logs, ensuring zero partial updates across trade history and portfolio balances.
           </p>
         </div>
         <button
           onClick={runAcidVerification}
           disabled={isScanning}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2 disabled:opacity-50 whitespace-nowrap"
+          className="glass-button-amber text-amber-500 font-bold text-white px-5 py-2.5 rounded-lg font-medium shadow-md shadow-black/20 transition-colors flex items-center gap-2 disabled:opacity-50 whitespace-nowrap"
         >
           <RefreshCw className={cn("w-4 h-4", isScanning && "animate-spin")} />
           {isScanning ? 'Verifying Ledger...' : 'Run ACID Diagnostic'}
@@ -135,7 +135,7 @@ export function ConsistencyDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
             className={cn(
-              "p-5 rounded-xl border bg-white shadow-sm relative overflow-hidden",
+              "p-5 rounded-xl border bg-surface shadow-md shadow-black/20 relative overflow-hidden",
               isScanning && "animate-pulse"
             )}
           >
@@ -143,11 +143,11 @@ export function ConsistencyDashboard() {
               "absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl opacity-10 rounded-bl-full",
               metric.color === 'emerald' ? 'from-emerald-500' : metric.color === 'amber' ? 'from-amber-500' : 'from-indigo-500'
             )} />
-            <h3 className="font-bold text-slate-800 flex items-center gap-2 text-sm">
+            <h3 className="font-bold text-slate-300 flex items-center gap-2 text-sm">
               <Lock className="w-4 h-4 text-slate-400" />
               {metric.label}
             </h3>
-            <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mt-1">{metric.desc}</p>
+            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mt-1">{metric.desc}</p>
             <div className="mt-4 flex items-center gap-2">
               {metric.color === 'emerald' || (metric.color === 'indigo' && !isScanning) ? (
                 <CheckCircle2 className={cn("w-5 h-5", metric.color === 'emerald' ? "text-emerald-500" : "text-indigo-500")} />
@@ -158,7 +158,7 @@ export function ConsistencyDashboard() {
               )}
               <span className={cn(
                 "font-bold",
-                metric.color === 'emerald' ? "text-emerald-700" : metric.color === 'amber' ? "text-amber-700" : "text-indigo-700"
+                metric.color === 'emerald' ? "text-emerald-400" : metric.color === 'amber' ? "text-amber-400" : "text-indigo-300"
               )}>
                 {metric.status}
               </span>
@@ -173,17 +173,17 @@ export function ConsistencyDashboard() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="bg-amber-50 border border-amber-200 rounded-xl p-5"
+            className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-5"
           >
             <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
               <div>
                 <h3 className="font-bold text-amber-900">Anomalies Detected ({anomalies.length})</h3>
-                <p className="text-sm text-amber-700 mt-1 mb-3">The verification engine found records that require attention.</p>
+                <p className="text-sm text-amber-400 mt-1 mb-3">The verification engine found records that require attention.</p>
                 <div className="space-y-2">
                   {anomalies.map((anomaly, idx) => (
-                    <div key={idx} className="bg-white/60 border border-amber-200/60 rounded p-3 text-sm flex flex-col gap-1">
-                      <span className="font-mono text-xs text-amber-800 bg-amber-100 w-fit px-1.5 py-0.5 rounded">ID: {anomaly.id}</span>
+                    <div key={idx} className="bg-white/60 border border-amber-500/20/60 rounded p-3 text-sm flex flex-col gap-1">
+                      <span className="font-mono text-xs text-amber-800 bg-amber-500/20 w-fit px-1.5 py-0.5 rounded">ID: {anomaly.id}</span>
                       <span className="text-amber-900 font-medium">{anomaly.reason}</span>
                     </div>
                   ))}
@@ -194,13 +194,13 @@ export function ConsistencyDashboard() {
         )}
       </AnimatePresence>
 
-      <div className="bg-slate-900 rounded-xl shadow-xl overflow-hidden border border-slate-800 flex flex-col h-[500px]">
+      <div className="glass-panel overflow-hidden flex flex-col h-[500px]">
         <div className="p-4 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
           <div className="flex items-center gap-2 text-emerald-400">
             <Server className="w-4 h-4" />
             <h3 className="font-mono text-sm font-semibold tracking-wide">24H_TRANSACTION_LEDGER</h3>
           </div>
-          <div className="flex items-center gap-2 text-slate-500 text-xs font-mono">
+          <div className="flex items-center gap-2 text-slate-400 text-xs font-mono">
             <span>UPTIME: 99.99%</span>
             <span>•</span>
             <span className={cn("px-2 py-0.5 rounded flex items-center gap-1.5", healthStatus === 'healthy' ? "bg-emerald-500/10 text-emerald-400" : healthStatus === 'warning' ? "bg-amber-500/10 text-amber-400" : "bg-slate-800 text-slate-400")}>
@@ -212,11 +212,11 @@ export function ConsistencyDashboard() {
         
         <div className="flex-1 overflow-auto p-4 font-mono text-sm">
           {logs.length === 0 && scanComplete ? (
-            <div className="text-slate-500 h-full flex items-center justify-center">
+            <div className="text-slate-400 h-full flex items-center justify-center">
               [ NO_TRANSACTIONS_IN_LAST_24_HOURS ]
             </div>
           ) : logs.length === 0 ? (
-            <div className="text-slate-500 h-full flex items-center justify-center animate-pulse">
+            <div className="text-slate-400 h-full flex items-center justify-center animate-pulse">
               [ INITIATE_SCAN_TO_VIEW_LOGS ]
             </div>
           ) : (
@@ -245,7 +245,7 @@ export function ConsistencyDashboard() {
                     <span className="text-slate-300 w-24">{formatCurrency(log.price)}</span>
                     
                     <div className="ml-auto flex items-center gap-2">
-                      <span className="text-slate-500 text-xs hidden md:inline-block">HASH: {log.consentId.substring(0,16)}...</span>
+                      <span className="text-slate-400 text-xs hidden md:inline-block">HASH: {log.consentId.substring(0,16)}...</span>
                       <span className="text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded text-[10px] font-bold tracking-widest flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3" /> ATOMIC
                       </span>

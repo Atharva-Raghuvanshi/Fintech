@@ -57,24 +57,20 @@ export function Sidebar() {
       {/* Sidebar - Collapsed/Expanded */}
       <div 
         className={cn(
-          "h-screen border-r border-white/5 bg-base flex flex-col fixed left-0 top-0 z-50 transition-all duration-300 ease-in-out",
+          "h-screen glass-nav flex flex-col fixed left-0 top-0 z-50 transition-all duration-300 ease-in-out border-r border-white/10",
           isOpen ? "w-[220px]" : "w-[64px]"
         )}
       >
         <div className="h-16 border-b border-white/5 flex items-center justify-center px-4 shrink-0">
           {isOpen ? (
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-3">
-                <Hexagon className="w-7 h-7 text-emerald-400" />
-                <span className="text-xl font-extrabold tracking-tight text-white">Dhan Drishti</span>
-              </div>
-              <button onClick={() => setIsOpen(false)} className="text-text-tertiary hover:text-text-primary">
-                <X className="w-4 h-4" />
+            <div className="flex items-center justify-end w-full">
+              <button onClick={() => setIsOpen(false)} className="text-text-tertiary hover:text-text-primary p-2">
+                <X className="w-5 h-5" />
               </button>
             </div>
           ) : (
-            <button onClick={() => setIsOpen(true)} className="flex items-center justify-center w-8 h-8 hover:opacity-90 transition-opacity text-emerald-400">
-              <Hexagon className="w-7 h-7" />
+            <button onClick={() => setIsOpen(true)} className="flex items-center justify-center p-2 text-text-tertiary hover:text-text-primary transition-opacity">
+              <Menu className="w-5 h-5" />
             </button>
           )}
         </div>
@@ -90,7 +86,7 @@ export function Sidebar() {
                 "flex items-center rounded-lg text-[13px] font-medium transition-colors group",
                 isOpen ? "gap-3 px-3 py-2" : "justify-center py-3",
                 isActive 
-                  ? "bg-primary text-white shadow-sm" 
+                  ? "bg-primary text-white shadow-md shadow-black/20" 
                   : "text-text-secondary hover:bg-white/5 hover:text-text-primary"
               )}
               title={!isOpen ? item.label : undefined}

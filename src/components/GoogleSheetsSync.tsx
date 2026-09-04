@@ -109,12 +109,12 @@ export function GoogleSheetsSync() {
   }, [autoSync, exportUrl]);
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="p-5 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
-        <h3 className="font-bold text-slate-800 flex items-center gap-2">
-          <FileSpreadsheet className="w-5 h-5 text-emerald-600" /> Google Sheets Integration
+    <div className="glass-panel overflow-hidden">
+      <div className="p-5 border-b border-white/5 bg-white/5 flex items-center justify-between">
+        <h3 className="font-bold text-slate-300 flex items-center gap-2">
+          <FileSpreadsheet className="w-5 h-5 text-emerald-400" /> Google Sheets Integration
         </h3>
-        {exportSuccess && <span className="px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded">Synced</span>}
+        {exportSuccess && <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-[10px] font-bold rounded">Synced</span>}
       </div>
       
       <div className="p-6">
@@ -123,7 +123,7 @@ export function GoogleSheetsSync() {
         </p>
 
         {error && (
-          <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-lg flex items-start gap-3 text-rose-700 text-sm">
+          <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-lg flex items-start gap-3 text-rose-400 text-sm">
             <AlertCircle className="w-5 h-5 shrink-0" />
             <p>{error}</p>
           </div>
@@ -131,11 +131,11 @@ export function GoogleSheetsSync() {
 
         {exportSuccess ? (
           <div className="space-y-4">
-            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+            <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
               <div>
                 <h4 className="font-semibold text-emerald-900">Export Successful!</h4>
-                <p className="text-sm text-emerald-700 mt-1">Your data has been successfully written to Google Sheets.</p>
+                <p className="text-sm text-emerald-400 mt-1">Your data has been successfully written to Google Sheets.</p>
               </div>
             </div>
             <a 
@@ -148,7 +148,7 @@ export function GoogleSheetsSync() {
             </a>
             <button 
               onClick={() => { setExportSuccess(false); setExportUrl(''); }}
-              className="w-full bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 font-medium py-3 rounded-lg transition-colors"
+              className="w-full bg-surface hover:bg-white/5 text-slate-600 border border-white/10 font-medium py-3 rounded-lg transition-colors"
             >
               Export Another Record
             </button>
@@ -159,7 +159,7 @@ export function GoogleSheetsSync() {
             disabled={isExporting}
             className={cn(
               "w-full flex items-center justify-center gap-2 font-medium py-3 rounded-lg transition-colors text-white",
-              isExporting ? "bg-emerald-400 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-700"
+              isExporting ? "bg-emerald-400 cursor-not-allowed" : "glass-button text-emerald-400 font-bold"
             )}
           >
             {isExporting ? (
@@ -170,15 +170,15 @@ export function GoogleSheetsSync() {
           </button>
         )}
 
-        <div className="mt-8 pt-6 border-t border-slate-100">
+        <div className="mt-8 pt-6 border-t border-white/5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-indigo-500/10 text-indigo-400 rounded-full flex items-center justify-center">
                 <RefreshCw className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="font-semibold text-slate-800">Auto-Push Sync</h4>
-                <p className="text-xs text-slate-500">Automatically sync transactions in the background</p>
+                <h4 className="font-semibold text-slate-300">Auto-Push Sync</h4>
+                <p className="text-xs text-slate-400">Automatically sync transactions in the background</p>
               </div>
             </div>
             
@@ -186,12 +186,12 @@ export function GoogleSheetsSync() {
               onClick={() => setAutoSync(!autoSync)}
               className={cn(
                 "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
-                autoSync ? "bg-emerald-500" : "bg-slate-200"
+                autoSync ? "bg-emerald-500" : "bg-white/10"
               )}
             >
               <span
                 className={cn(
-                  "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                  "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out",
                   autoSync ? "translate-x-5" : "translate-x-0"
                 )}
               />
@@ -199,10 +199,10 @@ export function GoogleSheetsSync() {
           </div>
           
           {autoSync && (
-            <div className="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-lg flex items-start gap-3">
-              <Clock className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
+            <div className="mt-4 p-4 bg-white/5 border border-white/10 rounded-lg flex items-start gap-3">
+              <Clock className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-slate-800">Sync Schedule Active</p>
+                <p className="text-sm font-medium text-slate-300">Sync Schedule Active</p>
                 <p className="text-xs text-slate-600 mt-1">Background worker is monitoring for new transactions. Changes will be pushed to your active spreadsheet every hour.</p>
               </div>
             </div>

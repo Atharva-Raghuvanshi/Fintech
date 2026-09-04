@@ -138,7 +138,7 @@ export function Dashboard() {
           className="xl:col-span-12 h-full min-h-0"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
         >
           <Card className="h-full flex flex-col justify-between relative overflow-hidden" noPadding>
             <div className="p-4 pb-0 flex justify-between items-start z-10 relative shrink-0">
@@ -178,6 +178,8 @@ export function Dashboard() {
                     label={{ position: 'insideTopLeft', value: 'Target: ₹60L', fill: '#9CA3AF', fontSize: 10 }} 
                   />
                   <Area 
+                    isAnimationActive={true}
+                    animationDuration={1500}
                     type="monotone" 
                     dataKey="value" 
                     stroke={ASSET_COLORS['Equity']} 
@@ -202,7 +204,7 @@ export function Dashboard() {
           className="lg:col-span-4 h-full min-h-0"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.1 }}
         >
           <Card className="h-full flex flex-col p-4">
             <SectionHeader title="Asset Allocation" action={<LiveBadge />} />
@@ -212,6 +214,8 @@ export function Dashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
+                      isAnimationActive={true}
+                      animationDuration={1000}
                       data={pieData}
                       innerRadius={45}
                       outerRadius={60}
@@ -253,7 +257,7 @@ export function Dashboard() {
           className="lg:col-span-4 h-full min-h-0"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.15 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.15 }}
         >
           <Card className="h-full flex flex-col bg-gradient-to-br from-surface to-elevated p-4">
             <SectionHeader title="Virtual CA Insights" />
@@ -286,7 +290,7 @@ export function Dashboard() {
           className="lg:col-span-4 h-full min-h-0"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.2 }}
         >
           <Card className="h-full flex flex-col p-4">
             <SectionHeader title="Rebalancer" />
@@ -304,7 +308,7 @@ export function Dashboard() {
                     </div>
                     <div className="h-1.5 bg-black/40 rounded-full flex relative border border-white/5">
                       {/* Target marker (vertical white line) */}
-                      <div className="absolute top-[-2px] bottom-[-2px] w-0.5 bg-white z-10 rounded-full" style={{ left: `${data.target}%` }} />
+                      <div className="absolute top-[-2px] bottom-[-2px] w-0.5 bg-surface z-10 rounded-full" style={{ left: `${data.target}%` }} />
                       
                       {/* Current bar */}
                       <div 
@@ -330,7 +334,7 @@ export function Dashboard() {
           className="lg:col-span-3 h-full min-h-0"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.2 }}
         >
           <Card className="h-full flex flex-col p-4">
             <SectionHeader title="Quick Trade" />
@@ -355,22 +359,28 @@ export function Dashboard() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-3 shrink-0">
-              <button 
+              <motion.button 
+    whileHover={{ scale: 1.05, rotate: -2 }}
+    whileTap={{ scale: 0.95 }}
+    transition={{ type: 'spring', stiffness: 300 }}
     onClick={() => handleQuickTrade('SELL')}
     disabled={isTrading}
     className="py-1 border border-negative/30 bg-negative/10 text-negative rounded-md text-[12px] font-medium hover:bg-negative/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
   >
     {isTrading && <div className="w-3 h-3 rounded-full border-2 border-negative border-t-transparent animate-spin" />}
     Sell
-  </button>
-              <button 
+  </motion.button>
+              <motion.button 
+    whileHover={{ scale: 1.05, rotate: 2 }}
+    whileTap={{ scale: 0.95 }}
+    transition={{ type: 'spring', stiffness: 300 }}
     onClick={() => handleQuickTrade('BUY')}
     disabled={isTrading}
     className="py-1 bg-positive/90 text-white rounded-md text-[12px] font-medium hover:bg-positive transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
   >
     {isTrading && <div className="w-3 h-3 rounded-full border-2 border-white border-t-transparent animate-spin" />}
     Buy
-  </button>
+  </motion.button>
             </div>
           </Card>
         </motion.div>
@@ -380,7 +390,7 @@ export function Dashboard() {
           className="lg:col-span-5 h-full min-h-0"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.25 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.25 }}
         >
           <Card className="h-full flex flex-col p-4">
             <SectionHeader title="Recent Activity" action={<button className="text-[11px] text-primary hover:underline">View all</button>} />
@@ -418,7 +428,7 @@ export function Dashboard() {
           className="lg:col-span-4 h-full min-h-0"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.3 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.3 }}
         >
           <Card className="h-full flex flex-col p-4">
             <SectionHeader title="Active Goals" action={<button className="text-[11px] text-primary hover:underline">Manage</button>} />

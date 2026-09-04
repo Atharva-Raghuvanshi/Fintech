@@ -19,13 +19,14 @@ import { ConsistencyDashboard } from './components/ConsistencyDashboard';
 import { GoogleSheetsSync } from './components/GoogleSheetsSync';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Login } from './components/Login';
+import { LandingPage } from './components/LandingPage';
 
 function DataExportWrapper() {
   return (
     <div className="p-8 max-w-4xl mx-auto space-y-6">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Data Export & Sync</h1>
-        <p className="text-slate-500 mt-1">Export your financial data to external services</p>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Data Export & Sync</h1>
+        <p className="text-slate-400 mt-1">Export your financial data to external services</p>
       </div>
       <GoogleSheetsSync />
     </div>
@@ -35,6 +36,7 @@ function DataExportWrapper() {
 function AppContent() {
   const { user, loading } = useAuth();
   const [privacyToggleRender, setPrivacyToggleRender] = useState(0);
+  const [hasEntered, setHasEntered] = useState(false);
 
   useEffect(() => {
     const handlePrivacyToggle = () => setPrivacyToggleRender(prev => prev + 1);
@@ -50,14 +52,18 @@ function AppContent() {
     return <Login />;
   }
 
+  if (!hasEntered) {
+    return <LandingPage onEnter={() => setHasEntered(true)} />;
+  }
+
   return (
     <BrowserRouter>
-      <div className="flex h-screen overflow-hidden bg-base text-text-primary">
+      <div className="flex h-screen bg-base text-text-primary">
         <Sidebar />
-        <div className="flex-1 ml-[64px] flex flex-col overflow-hidden" key={privacyToggleRender}>
+        <div className="flex-1 ml-[64px] flex flex-col h-screen overflow-y-auto" key={privacyToggleRender}>
           <Topbar />
-          <main className="flex-1 overflow-hidden">
-            <div className="max-w-[1600px] mx-auto p-4 h-full">
+          <main className="flex-1">
+            <div className="max-w-[1600px] mx-auto p-4 min-h-full">
               <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/banking" element={<BankTransactions />} />

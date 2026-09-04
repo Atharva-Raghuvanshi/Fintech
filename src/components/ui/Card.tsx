@@ -2,7 +2,7 @@ import React from 'react';
 
 export function Card({ children, className = '', elevated = false, noPadding = false }: { children: React.ReactNode, className?: string, elevated?: boolean, noPadding?: boolean }) {
   return (
-    <div className={`bg-surface border border-white/5 rounded-2xl overflow-hidden relative group transition-colors duration-200 ${elevated ? 'bg-elevated shadow-inner shadow-white/5' : 'hover:bg-elevated/50'} ${noPadding ? '' : 'p-5'} ${className}`}>
+    <div className={`glass-panel overflow-hidden relative group transition-all duration-300 ${elevated ? 'glass-panel-heavy' : 'hover:glass-panel-heavy'} ${noPadding ? '' : 'p-5'} ${className}`}>
       {children}
     </div>
   );
@@ -66,7 +66,7 @@ export function PeriodToggle({ options, active, onChange }: { options: string[],
         <button
           key={opt}
           onClick={() => onChange(opt)}
-          className={`px-3 py-1 text-[11px] font-medium rounded-md transition-colors ${active === opt ? 'bg-surface text-text-primary shadow-sm border border-white/5' : 'text-text-tertiary hover:text-text-secondary'}`}
+          className={`px-3 py-1 text-[11px] font-medium rounded-md transition-colors ${active === opt ? 'bg-surface text-text-primary shadow-md shadow-black/20 border border-white/5' : 'text-text-tertiary hover:text-text-secondary'}`}
         >
           {opt}
         </button>

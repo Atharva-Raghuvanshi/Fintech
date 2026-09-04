@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Bell, Calendar, TrendingUp, History, Bot, ArrowRight } from 'lucide-react';
+import { Search, Bell, Calendar, TrendingUp, History, Bot, ArrowRight, Hexagon } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { PeriodToggle } from './ui/Card';
 import { useNavigate } from 'react-router-dom';
@@ -43,8 +43,13 @@ export function Topbar() {
   };
 
   return (
-    <header className="h-16 border-b border-white/5 bg-base/80 backdrop-blur flex items-center justify-between px-6 sticky top-0 z-50">
-      <div className="flex-1 max-w-xl flex items-center gap-4 relative">
+    <header className="h-16 glass-nav flex items-center justify-between px-6 sticky top-0 z-50">
+      <div className="flex-1 max-w-2xl flex items-center gap-4 relative">
+        <div className="flex items-center gap-3 mr-6">
+          <Hexagon className="w-7 h-7 text-emerald-400 stroke-[2.5]" />
+          <div className="h-5 w-[2px] bg-gray-700 rounded-full"></div>
+          <span className="text-2xl text-white tracking-wider pb-1" style={{ fontFamily: "'Yatra One', system-ui" }}>धन दृष्टि</span>
+        </div>
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
           <input 
@@ -64,7 +69,7 @@ export function Topbar() {
         </div>
 
         {isSearchFocused && (
-          <div className="absolute top-full left-0 w-full mt-2 bg-elevated border border-white/10 rounded-lg shadow-xl overflow-hidden z-50">
+          <div className="absolute top-full left-0 w-full mt-2 glass-modal overflow-hidden z-50">
             {searchQuery.trim() ? (
               <div className="flex flex-col">
                 <button 

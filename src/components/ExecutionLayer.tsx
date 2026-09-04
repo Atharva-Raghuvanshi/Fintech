@@ -186,11 +186,11 @@ export function ExecutionLayer() {
   return (
     <div className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-          <Activity className="w-6 h-6 text-indigo-600" />
+        <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+          <Activity className="w-6 h-6 text-indigo-400" />
           Pro Trading Terminal
         </h1>
-        <p className="text-slate-500 mt-1">Advanced execution layer with Level 2 market data, multi-asset routing, and risk management.</p>
+        <p className="text-slate-400 mt-1">Advanced execution layer with Level 2 market data, multi-asset routing, and risk management.</p>
       </div>
 
       {/* Asset Class Strip */}
@@ -203,7 +203,7 @@ export function ExecutionLayer() {
               "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors border",
               activeAssetClass === ac 
                 ? "bg-slate-900 text-white border-slate-900" 
-                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                : "bg-surface text-slate-600 border-white/10 hover:bg-white/5"
             )}
           >
             {ac}
@@ -217,16 +217,21 @@ export function ExecutionLayer() {
         <div className="xl:col-span-8 space-y-6">
           
           {/* Main Chart Module */}
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.1 }}
+            className="glass-panel overflow-hidden flex flex-col"
+          >
+            <div className="p-4 border-b border-white/5 flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-3">
-                  <h2 className="text-xl font-bold text-slate-900">{activeAsset}</h2>
-                  <span className="px-2 py-0.5 rounded text-xs font-bold bg-slate-100 text-slate-600">{activeAssetClass}</span>
+                  <h2 className="text-xl font-bold text-white">{activeAsset}</h2>
+                  <span className="px-2 py-0.5 rounded text-xs font-bold bg-white/10 text-slate-600">{activeAssetClass}</span>
                 </div>
                 <div className="flex items-baseline gap-3 mt-1">
-                  <span className="text-2xl font-bold text-slate-900">{currentPrice.toFixed(2)}</span>
-                  <span className={cn("flex items-center text-sm font-semibold", dayChange >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                  <span className="text-2xl font-bold text-white">{currentPrice.toFixed(2)}</span>
+                  <span className={cn("flex items-center text-sm font-semibold", dayChange >= 0 ? "text-emerald-400" : "text-rose-400")}>
                     {dayChange >= 0 ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
                     {Math.abs(dayChange).toFixed(2)} ({Math.abs(dayChangePct).toFixed(2)}%)
                   </span>
@@ -235,14 +240,14 @@ export function ExecutionLayer() {
               
               {/* Chart Controls */}
               <div className="flex items-center gap-2">
-                <div className="flex bg-slate-100 p-1 rounded-lg">
+                <div className="flex bg-white/10 p-1 rounded-lg">
                   {INDICATORS.map(ind => (
                     <button
                       key={ind}
                       onClick={() => toggleIndicator(ind)}
                       className={cn(
                         "px-3 py-1 text-xs font-medium rounded-md transition-colors",
-                        activeIndicators.includes(ind) ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                        activeIndicators.includes(ind) ? "bg-surface text-indigo-300 shadow-md shadow-black/20" : "text-slate-400 hover:text-slate-700"
                       )}
                     >
                       {ind}
@@ -264,38 +269,43 @@ export function ExecutionLayer() {
                     labelStyle={{ color: '#64748b', fontSize: '12px', marginBottom: '4px' }}
                   />
                   
-                  <Line yAxisId="price" type="monotone" dataKey="price" stroke="#3b82f6" strokeWidth={2} dot={false} />
+                  <Line isAnimationActive={true} animationDuration={1500} yAxisId="price" type="monotone" dataKey="price" stroke="#3b82f6" strokeWidth={2} dot={false} />
                   
                   {activeIndicators.includes('MA') && (
-                    <Line yAxisId="price" type="monotone" dataKey="ma20" stroke="#f59e0b" strokeWidth={1.5} dot={false} strokeDasharray="5 5" />
+                    <Line isAnimationActive={true} animationDuration={1500} yAxisId="price" type="monotone" dataKey="ma20" stroke="#f59e0b" strokeWidth={1.5} dot={false} strokeDasharray="5 5" />
                   )}
                   
                   {activeIndicators.includes('Volume') && (
                     <YAxis yAxisId="vol" domain={[0, 'dataMax * 5']} hide />
                   )}
                   {activeIndicators.includes('Volume') && (
-                    <Bar yAxisId="vol" dataKey="volume" fill="#e2e8f0" opacity={0.5} />
+                    <Bar isAnimationActive={true} animationDuration={1500} yAxisId="vol" dataKey="volume" fill="#e2e8f0" opacity={0.5} />
                   )}
                   
                   {activeIndicators.includes('RSI') && (
                     <YAxis yAxisId="rsi" domain={[0, 100]} hide />
                   )}
                   {activeIndicators.includes('RSI') && (
-                    <Line yAxisId="rsi" type="monotone" dataKey="rsi" stroke="#8b5cf6" strokeWidth={1.5} dot={false} />
+                    <Line isAnimationActive={true} animationDuration={1500} yAxisId="rsi" type="monotone" dataKey="rsi" stroke="#8b5cf6" strokeWidth={1.5} dot={false} />
                   )}
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
-          </div>
+          </motion.div>
 
           {/* Market Depth & Risk Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
             {/* Market Depth (Level 2) */}
-            <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-              <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
-                <Layers className="w-4 h-4 text-slate-500" />
-                <h3 className="font-semibold text-slate-800 text-sm">Market Depth (Level 2)</h3>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.15 }}
+              className="glass-panel overflow-hidden"
+            >
+              <div className="p-4 border-b border-white/5 bg-white/5 flex items-center gap-2">
+                <Layers className="w-4 h-4 text-slate-400" />
+                <h3 className="font-semibold text-slate-300 text-sm">Market Depth (Level 2)</h3>
               </div>
               <div className="flex divide-x divide-slate-100">
                 <div className="flex-1">
@@ -304,9 +314,9 @@ export function ExecutionLayer() {
                     <span>Qty</span>
                   </div>
                   {mockMarketDepth.bids.map((bid, i) => (
-                    <div key={i} className="flex justify-between px-4 py-1.5 text-xs hover:bg-emerald-50 relative group">
-                      <div className="absolute left-0 top-0 bottom-0 bg-emerald-100/50" style={{ width: `${(bid.qty / 3000) * 100}%` }}></div>
-                      <span className="text-emerald-700 font-medium relative z-10">{bid.price.toFixed(2)}</span>
+                    <div key={i} className="flex justify-between px-4 py-1.5 text-xs hover:bg-emerald-500/10 relative group">
+                      <div className="absolute left-0 top-0 bottom-0 bg-emerald-500/20/50" style={{ width: `${(bid.qty / 3000) * 100}%` }}></div>
+                      <span className="text-emerald-400 font-medium relative z-10">{bid.price.toFixed(2)}</span>
                       <span className="text-slate-600 relative z-10">{bid.qty}</span>
                     </div>
                   ))}
@@ -317,34 +327,39 @@ export function ExecutionLayer() {
                     <span>Qty</span>
                   </div>
                   {mockMarketDepth.asks.map((ask, i) => (
-                    <div key={i} className="flex justify-between px-4 py-1.5 text-xs hover:bg-rose-50 relative group">
-                      <div className="absolute right-0 top-0 bottom-0 bg-rose-100/50" style={{ width: `${(ask.qty / 4000) * 100}%` }}></div>
-                      <span className="text-rose-700 font-medium relative z-10">{ask.price.toFixed(2)}</span>
+                    <div key={i} className="flex justify-between px-4 py-1.5 text-xs hover:bg-rose-500/10 relative group">
+                      <div className="absolute right-0 top-0 bottom-0 bg-rose-500/20/50" style={{ width: `${(ask.qty / 4000) * 100}%` }}></div>
+                      <span className="text-rose-400 font-medium relative z-10">{ask.price.toFixed(2)}</span>
                       <span className="text-slate-600 relative z-10">{ask.qty}</span>
                     </div>
                   ))}
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* Live Portfolio Risk */}
-            <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-5 flex flex-col justify-between">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.2 }}
+              className="glass-panel p-5 flex flex-col justify-between"
+            >
               <div>
-                <h3 className="font-semibold text-slate-800 text-sm mb-4 flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <h3 className="font-semibold text-slate-300 text-sm mb-4 flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
                   Portfolio Risk & Margin
                 </h3>
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between text-xs mb-1">
-                      <span className="text-slate-500">Available Margin</span>
-                      <span className="font-bold text-slate-900">{formatCurrency(availableMargin)}</span>
+                      <span className="text-slate-400">Available Margin</span>
+                      <span className="font-bold text-white">{formatCurrency(availableMargin)}</span>
                     </div>
                     <div className="flex justify-between text-xs mb-2">
-                      <span className="text-slate-500">Margin Required</span>
-                      <span className="font-medium text-slate-900">{formatCurrency(requiredMargin)}</span>
+                      <span className="text-slate-400">Margin Required</span>
+                      <span className="font-medium text-white">{formatCurrency(requiredMargin)}</span>
                     </div>
-                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
                       <div 
                         className={cn("h-full rounded-full transition-all duration-500", marginUtilizedPct > 80 ? "bg-rose-500" : marginUtilizedPct > 50 ? "bg-amber-500" : "bg-indigo-500")}
                         style={{ width: `${marginUtilizedPct}%` }}
@@ -354,50 +369,59 @@ export function ExecutionLayer() {
                   </div>
                 </div>
               </div>
-              <div className="p-3 bg-indigo-50 rounded-lg mt-4 flex items-start gap-2 border border-indigo-100">
-                <Info className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-                <p className="text-xs text-indigo-800 leading-relaxed">
+              <div className="p-3 bg-indigo-500/10 rounded-lg mt-4 flex items-start gap-2 border border-indigo-100">
+                <Info className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-indigo-200 leading-relaxed">
                   GTT and Bracket orders require 15% span margin. Real-time monitoring active.
                 </p>
               </div>
-            </div>
+            </motion.div>
 
           </div>
         </div>
 
         {/* RIGHT COLUMN: Order Entry Module */}
         <div className="xl:col-span-4">
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm sticky top-6">
-            <div className="flex border-b border-slate-100 p-2 gap-2 bg-slate-50/50 rounded-t-xl">
-              <button 
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.25 }}
+            className="glass-panel sticky top-6"
+          >
+            <div className="flex border-b border-white/5 p-2 gap-2 bg-slate-50/50 rounded-t-xl">
+              <motion.button 
+                whileHover={{ scale: 1.02, rotate: -1 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setAction('BUY')}
-                className={cn("flex-1 py-2 text-sm font-bold rounded-lg transition-colors", action === 'BUY' ? "bg-emerald-500 text-white shadow-sm" : "bg-transparent text-slate-500 hover:bg-slate-100")}
+                className={cn("flex-1 py-2 text-sm font-bold rounded-lg transition-colors", action === 'BUY' ? "bg-emerald-500 text-white shadow-md shadow-black/20" : "bg-transparent text-slate-400 hover:bg-white/10")}
               >
                 BUY
-              </button>
-              <button 
+              </motion.button>
+              <motion.button 
+                whileHover={{ scale: 1.02, rotate: 1 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setAction('SELL')}
-                className={cn("flex-1 py-2 text-sm font-bold rounded-lg transition-colors", action === 'SELL' ? "bg-rose-500 text-white shadow-sm" : "bg-transparent text-slate-500 hover:bg-slate-100")}
+                className={cn("flex-1 py-2 text-sm font-bold rounded-lg transition-colors", action === 'SELL' ? "bg-rose-500 text-white shadow-md shadow-black/20" : "bg-transparent text-slate-400 hover:bg-white/10")}
               >
                 SELL
-              </button>
+              </motion.button>
             </div>
 
             <form onSubmit={handleExecute} className="p-5 space-y-5">
               {/* Asset Select */}
               <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Instrument</label>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Instrument</label>
                 <input
                   type="text"
                   value={activeAsset}
                   onChange={(e) => setActiveAsset(e.target.value.toUpperCase())}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 />
               </div>
 
               {/* Order Types */}
               <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Order Type</label>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Order Type</label>
                 <div className="grid grid-cols-3 gap-2">
                   {ORDER_TYPES.map(type => (
                     <button
@@ -407,8 +431,8 @@ export function ExecutionLayer() {
                       className={cn(
                         "py-1.5 text-xs font-medium rounded-md border transition-colors",
                         orderType === type 
-                          ? (action === 'BUY' ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-rose-50 text-rose-700 border-rose-200")
-                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                          ? (action === 'BUY' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-rose-500/10 text-rose-400 border-rose-500/20")
+                          : "bg-surface text-slate-600 border-white/10 hover:bg-white/5"
                       )}
                     >
                       {type}
@@ -420,23 +444,23 @@ export function ExecutionLayer() {
               {/* Qty & Price */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Qty</label>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Qty</label>
                   <input
                     type="number"
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
-                    className="w-full border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none border"
+                    className="w-full border-white/10 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none border"
                     min="1"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Price</label>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Price</label>
                   <input
                     type="number"
                     value={orderType === 'Market' ? currentPrice : price}
                     onChange={(e) => setPrice(e.target.value)}
                     disabled={orderType === 'Market'}
-                    className={cn("w-full border-slate-200 rounded-lg px-3 py-2 text-sm border focus:ring-2 focus:ring-indigo-500 focus:outline-none", orderType === 'Market' && "bg-slate-100 text-slate-500")}
+                    className={cn("w-full border-white/10 rounded-lg px-3 py-2 text-sm border focus:ring-2 focus:ring-indigo-500 focus:outline-none", orderType === 'Market' && "bg-white/10 text-slate-400")}
                     step="0.05"
                   />
                 </div>
@@ -453,24 +477,24 @@ export function ExecutionLayer() {
                   >
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1"><Crosshair className="w-3 h-3"/> Trigger Price</label>
+                        <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1"><Crosshair className="w-3 h-3"/> Trigger Price</label>
                         <input
                           type="number"
                           value={triggerPrice}
                           onChange={(e) => setTriggerPrice(e.target.value)}
                           placeholder="0.00"
-                          className="w-full border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none border"
+                          className="w-full border-white/10 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none border"
                         />
                       </div>
                       {(orderType === 'Bracket') && (
                         <div>
-                          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Target</label>
+                          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Target</label>
                           <input
                             type="number"
                             value={target}
                             onChange={(e) => setTarget(e.target.value)}
                             placeholder="0.00"
-                            className="w-full border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none border"
+                            className="w-full border-white/10 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none border"
                           />
                         </div>
                       )}
@@ -488,8 +512,8 @@ export function ExecutionLayer() {
                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
                     className={cn(
                       "p-3 rounded-lg text-xs font-medium flex items-start gap-2",
-                      status.type === 'success' ? "bg-emerald-50 text-emerald-700" : 
-                      status.type === 'loading' ? "bg-indigo-50 text-indigo-700" : "bg-rose-50 text-rose-700"
+                      status.type === 'success' ? "bg-emerald-500/10 text-emerald-400" : 
+                      status.type === 'loading' ? "bg-indigo-500/10 text-indigo-300" : "bg-rose-500/10 text-rose-400"
                     )}
                   >
                     {status.type === 'loading' ? <Clock className="w-4 h-4 animate-spin shrink-0" /> : 
@@ -500,19 +524,22 @@ export function ExecutionLayer() {
               </AnimatePresence>
 
               <div className="pt-2">
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.02, rotate: (action === 'BUY' ? -1 : 1) }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: 'spring', stiffness: 300 }}
                   type="submit"
                   disabled={status?.type === 'loading'}
                   className={cn(
                     "w-full py-3.5 rounded-lg text-white font-bold tracking-wide transition-all shadow-md flex justify-center items-center gap-2",
                     action === 'BUY' 
-                      ? "bg-emerald-500 hover:bg-emerald-600 hover:shadow-emerald-200" 
-                      : "bg-rose-500 hover:bg-rose-600 hover:shadow-rose-200",
+                      ? "bg-emerald-500 hover:bg-emerald-600 hover:shadow-emerald-500/20" 
+                      : "bg-rose-500 hover:bg-rose-600 hover:shadow-rose-500/20",
                     status?.type === 'loading' && "opacity-70 cursor-not-allowed"
                   )}
                 >
                   {status?.type === 'loading' ? 'PROCESSING...' : `${action} ${activeAsset}`}
-                </button>
+                </motion.button>
               </div>
               
               <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-400">
@@ -520,7 +547,7 @@ export function ExecutionLayer() {
                 <span>Encrypted & routed to direct market access.</span>
               </div>
             </form>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>
