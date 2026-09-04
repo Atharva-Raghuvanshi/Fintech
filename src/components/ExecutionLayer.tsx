@@ -11,48 +11,13 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { formatCurrency, cn } from '../lib/utils';
 import type { Portfolio, AuditLogEntry } from '../types';
-import { doc, runTransaction, collection, onSnapshot } from "firebase/firestore";
-import { db } from "../lib/firebase";
 import { useAuth } from "../contexts/AuthContext";
 import { insertAppData } from '../lib/supabaseActions';
+import { supabase } from '../lib/supabase';
 
 
 // Mock Data Generators
-const generateChartData = (volatility: number = 10, trend: number = 0) => {
-  let basePrice = 1500;
-  const data = [];
-  for (let i = 0; i < 60; i++) {
-    basePrice += (Math.random() - 0.5 + trend) * volatility;
-    const ma20 = basePrice - (Math.random() * (volatility/2));
-    const rsi = 30 + Math.random() * 40;
-    const volume = Math.random() * 10000;
-    data.push({
-      time: `10:${i.toString().padStart(2, '0')}`,
-      price: Number(basePrice.toFixed(2)),
-      ma20: Number(ma20.toFixed(2)),
-      rsi: Number(rsi.toFixed(2)),
-      volume: Math.floor(volume),
-    });
-  }
-  return data;
-};
 
-const mockMarketDepth = {
-  bids: [
-    { price: 1499.5, qty: 500, orders: 12 },
-    { price: 1499.0, qty: 1200, orders: 45 },
-    { price: 1498.5, qty: 800, orders: 18 },
-    { price: 1498.0, qty: 2500, orders: 89 },
-    { price: 1497.5, qty: 150, orders: 4 },
-  ],
-  asks: [
-    { price: 1500.5, qty: 400, orders: 15 },
-    { price: 1501.0, qty: 1800, orders: 60 },
-    { price: 1501.5, qty: 650, orders: 22 },
-    { price: 1502.0, qty: 3200, orders: 110 },
-    { price: 1502.5, qty: 900, orders: 35 },
-  ]
-};
 
 const ASSET_CLASSES = ['Stocks', 'F&O', 'Gold', 'Silver', 'Crypto', 'ETFs', 'Mutual Funds', 'Bonds', 'Forex'];
 const ORDER_TYPES = ['Market', 'Limit', 'SL', 'Bracket', 'GTT'];
@@ -61,9 +26,7 @@ const INDICATORS = ['MA', 'RSI', 'MACD', 'Volume'];
 export function ExecutionLayer() {
   const { user } = useAuth();
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
-  const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
-  
-  const [activeAssetClass, setActiveAssetClass] = useState('Stocks');
+const [activeAssetClass, setActiveAssetClass] = useState('Stocks');
   const [activeAsset, setActiveAsset] = useState('RELIANCE.NS');
   
   const [action, setAction] = useState<'BUY' | 'SELL'>('BUY');
@@ -77,98 +40,91 @@ export function ExecutionLayer() {
   const [activeIndicators, setActiveIndicators] = useState<string[]>(['MA', 'Volume']);
   
   const [status, setStatus] = useState<{ type: 'success' | 'error' | 'loading', msg: string } | null>(null);
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [marketDepth, setMarketDepth] = useState<{ bids: any[], asks: any[] }>({ bids: [], asks: [] });
 
-  const chartData = useMemo(() => generateChartData(activeAssetClass === 'Crypto' ? 30 : 10), [activeAssetClass, activeAsset]);
-  const currentPrice = chartData[chartData.length - 1].price;
-  const dayChange = currentPrice - chartData[0].price;
-  const dayChangePct = (dayChange / chartData[0].price) * 100;
+  
+  const currentPrice = chartData.length ? chartData[chartData.length - 1].price : 0;
+  const dayChange = chartData.length ? currentPrice - chartData[0].price : 0;
+  const dayChangePct = chartData.length ? (dayChange / chartData[0].price) * 100 : 0;
 
   useEffect(() => {
     if (!user) return;
-    const portfolioRef = doc(db, "users", user.uid, "portfolio", "main");
-    const unsub = onSnapshot(portfolioRef, (snap) => {
-      if (snap.exists()) setPortfolio(snap.data() as Portfolio);
-      else {
-        // Initialize from mock if not exists
-        fetch("/api/portfolio").then(r => r.headers.get('content-type')?.includes('application/json') ? r.json() : null).then(data => data && setPortfolio(data));
+
+    // Supabase Realtime Subscription
+    const channel = supabase.channel('custom-update-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'portfolio', filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          if (payload.new) setPortfolio(payload.new as any);
+        }
+      )
+      .subscribe();
+
+    // Initial fetch
+    (supabase as any).from('portfolio').select('*').eq('user_id', user.id).single().then(({ data, error }) => {
+      if (data) {
+        setPortfolio(data as any);
+      } else {
+        setPortfolio({ cash: 1250000, equity: 4500000, mutualFunds: 2800000, gold: 850000, crypto: 420000, silver: 150000, bonds: 500000 });
       }
     });
-    fetch("/api/audit-log").then(res => res.headers.get('content-type')?.includes('application/json') ? res.json() : null).then(data => data && setAuditLog(data));
-    return () => unsub();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const handleExecute = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!portfolio || !user) return;
     setStatus({ type: "loading", msg: "Executing ACID Transaction..." });
-
-
-
     
     const totalAmount = Number(quantity) * (orderType === "Market" ? currentPrice : Number(price));
+    
     try {
+      // 1. Insert trade into Supabase
       await insertAppData({
-        user_id: user.uid,
+        user_id: user.id,
         type: action,
         asset: activeAsset,
         amount: totalAmount,
         order_type: orderType,
         quantity: Number(quantity),
-        price: orderType === "Market" ? currentPrice : Number(price)
+        price: orderType === "Market" ? currentPrice : Number(price),
+        source: 'Execution Layer'
       });
-    } catch (e) {
-      console.error("Supabase insert failed", e);
-    }
-    try {
-      await runTransaction(db, async (transaction) => {
-        const portfolioRef = doc(db, "users", user.uid, "portfolio", "main");
-        const portfolioDoc = await transaction.get(portfolioRef);
+
+      // 2. Chained update call to portfolio table to simulate ACID behavior
+      let currentCash = portfolio.cash || 0;
+      if (action === "BUY" && currentCash < totalAmount) {
+        throw new Error("Insufficient margin for this transaction.");
+      }
+      
+      const newCash = action === "BUY" ? currentCash - totalAmount : currentCash + totalAmount;
+      const assetKey = activeAssetClass === "Crypto" ? "crypto" : activeAssetClass === "Gold" ? "gold" : activeAssetClass === "Silver" ? "silver" : activeAssetClass === "Mutual Funds" ? "mutualFunds" : activeAssetClass === "Bonds" ? "bonds" : "equity";
+      
+      const currentAssetVal = (portfolio as any)[assetKey] || 0;
+      const newAssetVal = action === "BUY" ? currentAssetVal + totalAmount : Math.max(0, currentAssetVal - totalAmount);
+      
+      const newPortfolioData = {
+        user_id: user.id,
+        cash: newCash,
+        [assetKey]: newAssetVal
+      };
+
+      const { error } = await (supabase as any)
+        .from('portfolio')
+        .upsert(newPortfolioData, { onConflict: 'user_id' });
         
-        let currentCash = portfolio.cash;
-        if (portfolioDoc.exists()) {
-          currentCash = portfolioDoc.data().cash;
-        }
-        
-        if (action === "BUY" && currentCash < totalAmount) {
-          throw new Error("Insufficient margin for this transaction.");
-        }
-        
-        const newCash = action === "BUY" ? currentCash - totalAmount : currentCash + totalAmount;
-        const assetKey = activeAssetClass === "Crypto" ? "crypto" : activeAssetClass === "Gold" ? "gold" : activeAssetClass === "Silver" ? "silver" : activeAssetClass === "Mutual Funds" ? "mutualFunds" : activeAssetClass === "Bonds" ? "bonds" : "equity";
-        
-        let currentAssetVal = portfolioDoc.exists() ? (portfolioDoc.data()[assetKey] || 0) : ((portfolio as any)[assetKey] || 0);
-        const newAssetVal = action === "BUY" ? currentAssetVal + totalAmount : Math.max(0, currentAssetVal - totalAmount);
-        
-        const newPortfolioData = {
-          userId: user.uid,
-          cash: newCash,
-          equity: assetKey === "equity" ? newAssetVal : (portfolioDoc.exists() ? portfolioDoc.data().equity || 0 : portfolio.equity || 0),
-          mutualFunds: assetKey === "mutualFunds" ? newAssetVal : (portfolioDoc.exists() ? portfolioDoc.data().mutualFunds || 0 : portfolio.mutualFunds || 0),
-          gold: assetKey === "gold" ? newAssetVal : (portfolioDoc.exists() ? portfolioDoc.data().gold || 0 : portfolio.gold || 0),
-          crypto: assetKey === "crypto" ? newAssetVal : (portfolioDoc.exists() ? portfolioDoc.data().crypto || 0 : 0),
-          silver: assetKey === "silver" ? newAssetVal : (portfolioDoc.exists() ? portfolioDoc.data().silver || 0 : 0),
-          bonds: assetKey === "bonds" ? newAssetVal : (portfolioDoc.exists() ? portfolioDoc.data().bonds || 0 : 0),
-        };
-        
-        transaction.set(portfolioRef, newPortfolioData, { merge: true });
-        
-        const tradeRef = doc(collection(db, "users", user.uid, "trades"));
-        transaction.set(tradeRef, {
-          userId: user.uid,
-          asset: activeAsset,
-          action,
-          amount: totalAmount,
-          price: orderType === "Market" ? currentPrice : Number(price),
-          quantity: Number(quantity),
-          orderType,
-          timestamp: Date.now(),
-          consentId: `cons_${orderType.toLowerCase()}_${Date.now()}`
-        });
-      });
-      setStatus({ type: "success", msg: `${orderType} ${action} order placed successfully with ACID guarantees.` });
-      // Note: Component state updates will occur via the onSnapshot listener if added, 
-      // but for immediate feedback we rely on local state updates if needed, though here we just rely on standard fetching for now.
+      if (error) {
+         console.error('Portfolio Update Error:', error);
+      }
+
+      setStatus({ type: "success", msg: `${orderType} ${action} order placed successfully.` });
     } catch (err: any) {
+      console.error(err);
       setStatus({ type: "error", msg: err.message || "Execution failed." });
     } finally {
       setTimeout(() => setStatus(null), 4000);
@@ -198,7 +154,21 @@ export function ExecutionLayer() {
         {ASSET_CLASSES.map(ac => (
           <button
             key={ac}
-            onClick={() => setActiveAssetClass(ac)}
+            onClick={() => {
+              setActiveAssetClass(ac);
+              const defaults: Record<string, string> = {
+                'Stocks': 'RELIANCE.NS',
+                'F&O': 'NIFTY24DEC15000CE',
+                'Gold': 'GOLDBEES',
+                'Silver': 'SILVERBEES',
+                'Crypto': 'BTC-USD',
+                'ETFs': 'NIFTYBEES',
+                'Mutual Funds': 'PARAGPARIKH-FLEXI',
+                'Bonds': 'SGB24DEC',
+                'Forex': 'USDINR'
+              };
+              setActiveAsset(defaults[ac] || 'RELIANCE.NS');
+            }}
             className={cn(
               "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors border",
               activeAssetClass === ac 
@@ -258,38 +228,37 @@ export function ExecutionLayer() {
             </div>
 
             <div className="p-4 flex-1 h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={chartData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} minTickGap={30} />
-                  <YAxis yAxisId="price" domain={['auto', 'auto']} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} orientation="right" />
-                  
-                  <RechartsTooltip 
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                    labelStyle={{ color: '#64748b', fontSize: '12px', marginBottom: '4px' }}
-                  />
-                  
-                  <Line isAnimationActive={true} animationDuration={1500} yAxisId="price" type="monotone" dataKey="price" stroke="#3b82f6" strokeWidth={2} dot={false} />
-                  
-                  {activeIndicators.includes('MA') && (
-                    <Line isAnimationActive={true} animationDuration={1500} yAxisId="price" type="monotone" dataKey="ma20" stroke="#f59e0b" strokeWidth={1.5} dot={false} strokeDasharray="5 5" />
-                  )}
-                  
-                  {activeIndicators.includes('Volume') && (
-                    <YAxis yAxisId="vol" domain={[0, 'dataMax * 5']} hide />
-                  )}
-                  {activeIndicators.includes('Volume') && (
-                    <Bar isAnimationActive={true} animationDuration={1500} yAxisId="vol" dataKey="volume" fill="#e2e8f0" opacity={0.5} />
-                  )}
-                  
-                  {activeIndicators.includes('RSI') && (
-                    <YAxis yAxisId="rsi" domain={[0, 100]} hide />
-                  )}
-                  {activeIndicators.includes('RSI') && (
-                    <Line isAnimationActive={true} animationDuration={1500} yAxisId="rsi" type="monotone" dataKey="rsi" stroke="#8b5cf6" strokeWidth={1.5} dot={false} />
-                  )}
-                </ComposedChart>
-              </ResponsiveContainer>
+              {chartData.length === 0 ? (
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={chartData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} minTickGap={30} />
+                    <YAxis yAxisId="price" domain={['auto', 'auto']} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} orientation="right" />
+                    <YAxis yAxisId="volume" domain={[0, 'dataMax * 3']} hide />
+                    {activeIndicators.includes('RSI') && <YAxis yAxisId="rsi" domain={[0, 100]} hide />}
+                    
+                    <RechartsTooltip 
+                      contentStyle={{ backgroundColor: 'rgba(5, 7, 10, 0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                      itemStyle={{ color: '#fff' }}
+                    />
+                    
+                    <Area yAxisId="price" type="monotone" dataKey="price" stroke="#4f46e5" fillOpacity={1} fill="url(#colorPrice)" />
+                    {activeIndicators.includes('Volume') && (
+                      <Bar yAxisId="volume" dataKey="volume" fill="#cbd5e1" fillOpacity={0.5} barSize={4} />
+                    )}
+                    {activeIndicators.includes('MA') && (
+                      <Line isAnimationActive={true} animationDuration={1500} yAxisId="price" type="monotone" dataKey="ma20" stroke="#f59e0b" strokeWidth={1.5} dot={false} strokeDasharray="3 3" />
+                    )}
+                    {activeIndicators.includes('RSI') && (
+                      <Line isAnimationActive={true} animationDuration={1500} yAxisId="rsi" type="monotone" dataKey="rsi" stroke="#8b5cf6" strokeWidth={1.5} dot={false} />
+                    )}
+                  </ComposedChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </motion.div>
 
@@ -307,33 +276,41 @@ export function ExecutionLayer() {
                 <Layers className="w-4 h-4 text-slate-400" />
                 <h3 className="font-semibold text-slate-300 text-sm">Market Depth (Level 2)</h3>
               </div>
-              <div className="flex divide-x divide-slate-100">
-                <div className="flex-1">
-                  <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider px-4 py-2 border-b border-slate-50">
-                    <span>Bid</span>
-                    <span>Qty</span>
+              <div className="flex divide-x divide-white/10 h-64">
+                {marketDepth.bids.length === 0 && marketDepth.asks.length === 0 ? (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="w-6 h-6 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
                   </div>
-                  {mockMarketDepth.bids.map((bid, i) => (
-                    <div key={i} className="flex justify-between px-4 py-1.5 text-xs hover:bg-emerald-500/10 relative group">
-                      <div className="absolute left-0 top-0 bottom-0 bg-emerald-500/20/50" style={{ width: `${(bid.qty / 3000) * 100}%` }}></div>
-                      <span className="text-emerald-400 font-medium relative z-10">{bid.price.toFixed(2)}</span>
-                      <span className="text-slate-600 relative z-10">{bid.qty}</span>
+                ) : (
+                  <>
+                    <div className="flex-1">
+                      <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider px-4 py-2 border-b border-white/5">
+                        <span>Bid</span>
+                        <span>Qty</span>
+                      </div>
+                      {marketDepth.bids.map((bid, i) => (
+                        <div key={i} className="flex justify-between px-4 py-1.5 text-xs hover:bg-emerald-500/10 relative group text-white">
+                          <div className="absolute left-0 top-0 bottom-0 bg-emerald-500/20" style={{ width: `${(bid.qty / 3000) * 100}%` }}></div>
+                          <span className="relative text-emerald-400 font-mono">{bid.price.toFixed(2)}</span>
+                          <span className="relative text-slate-300 font-mono">{bid.qty}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                <div className="flex-1">
-                  <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider px-4 py-2 border-b border-slate-50">
-                    <span>Ask</span>
-                    <span>Qty</span>
-                  </div>
-                  {mockMarketDepth.asks.map((ask, i) => (
-                    <div key={i} className="flex justify-between px-4 py-1.5 text-xs hover:bg-rose-500/10 relative group">
-                      <div className="absolute right-0 top-0 bottom-0 bg-rose-500/20/50" style={{ width: `${(ask.qty / 4000) * 100}%` }}></div>
-                      <span className="text-rose-400 font-medium relative z-10">{ask.price.toFixed(2)}</span>
-                      <span className="text-slate-600 relative z-10">{ask.qty}</span>
+                    <div className="flex-1">
+                      <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider px-4 py-2 border-b border-white/5">
+                        <span>Ask</span>
+                        <span>Qty</span>
+                      </div>
+                      {marketDepth.asks.map((ask, i) => (
+                        <div key={i} className="flex justify-between px-4 py-1.5 text-xs hover:bg-rose-500/10 relative group text-white">
+                          <div className="absolute right-0 top-0 bottom-0 bg-rose-500/20" style={{ width: `${(ask.qty / 3000) * 100}%` }}></div>
+                          <span className="relative text-rose-400 font-mono">{ask.price.toFixed(2)}</span>
+                          <span className="relative text-slate-300 font-mono">{ask.qty}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </>
+                )}
               </div>
             </motion.div>
 

@@ -8,94 +8,62 @@ import type { Portfolio } from '../types';
 import { Card, SectionHeader, KpiCard, StatusPill, PeriodToggle } from './ui/Card';
 import { insertAppData } from '../lib/supabaseActions';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
+import { useNavigate } from 'react-router-dom';
 import { ASSET_COLORS, getAssetColor } from '../lib/assetColors';
-
-// Mock Data
-const mockPortfolio: Portfolio = {
-  cash: 1250000,
-  equity: 4500000,
-  mutualFunds: 2800000,
-  gold: 850000,
-  crypto: 420000,
-  silver: 150000,
-  bonds: 500000,
-};
-
-const recentTrades = [
-  { id: 1, asset: 'NIFTYBEES', type: 'BUY', amount: 50000, date: '2026-08-20', status: 'Executed' },
-  { id: 2, asset: 'RELIANCE', type: 'SELL', amount: 120000, date: '2026-08-19', status: 'Executed' },
-  { id: 3, asset: 'GOLDBEES', type: 'BUY', amount: 25000, date: '2026-08-18', status: 'Pending' },
-  { id: 4, asset: 'HDFCBANK', type: 'BUY', amount: 75000, date: '2026-08-15', status: 'Executed' },
-];
-
-const goals = [
-  { name: 'Vacation Fund', target: 500000, current: 310000 },
-  { name: 'Retirement', target: 50000000, current: 9000000 },
-];
-
-const rebalanceData = [
-  { asset: 'Equity', target: 40, current: 43.2 },
-  { asset: 'Mutual Funds', target: 30, current: 26.8 },
-  { asset: 'Gold', target: 10, current: 8.1 },
-  { asset: 'Bonds', target: 20, current: 21.9 },
-];
-
-const generateNetWorthData = (period: string, currentTotal: number) => {
-  const now = new Date();
-  const data = [];
-  let points = 12;
-  let startValue = 4200000;
-  let volatility = 100000;
-  let trend = 50000;
-
-  if (period === '1W') { points = 7; startValue = currentTotal * 0.98; volatility = 50000; trend = 30000; }
-  else if (period === '1M') { points = 30; startValue = currentTotal * 0.92; volatility = 80000; trend = 20000; }
-  else if (period === '3M') { points = 90; startValue = currentTotal * 0.85; volatility = 100000; trend = 25000; }
-  else if (period === '1Y') { points = 12; startValue = currentTotal * 0.70; volatility = 150000; trend = 100000; }
-  else if (period === 'ALL') { points = 60; startValue = currentTotal * 0.30; volatility = 300000; trend = 80000; }
-
-  let currentVal = startValue;
-  for (let i = 0; i < points; i++) {
-    const d = new Date(now);
-    let dateStr = '';
-    
-    if (period === '1W' || period === '1M' || period === '3M') {
-      d.setDate(d.getDate() - (points - 1 - i));
-      dateStr = `${d.getDate()} ${d.toLocaleString('default', { month: 'short' })}`;
-    } else if (period === '1Y') {
-      d.setMonth(d.getMonth() - (points - 1 - i));
-      dateStr = `${d.toLocaleString('default', { month: 'short' })} '${d.getFullYear().toString().substr(2,2)}`;
-    } else if (period === 'ALL') {
-      d.setMonth(d.getMonth() - (points - 1 - i));
-      dateStr = `${d.getFullYear()}`;
-    }
-
-    data.push({
-      date: dateStr,
-      value: Math.round(currentVal)
-    });
-    currentVal += trend + (Math.random() - 0.4) * volatility;
-  }
-  
-  // Tie the final data point to the exact current portfolio value
-  data[data.length - 1].value = currentTotal;
-  return data;
-};
 
 export function Dashboard() {
   const [heroPeriod, setHeroPeriod] = useState('1M');
   const [tradeAsset, setTradeAsset] = useState('NIFTYBEES');
   const [tradeAmount, setTradeAmount] = useState('10000');
-
+  
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isTrading, setIsTrading] = useState(false);
+  const [aiQuery, setAiQuery] = useState('');
+
+  const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
+  const [recentTrades, setRecentTrades] = useState<any[]>([]);
+  const [goals, setGoals] = useState<any[]>([]);
+  const [rebalanceData, setRebalanceData] = useState<any[]>([]);
+
+  React.useEffect(() => {
+    if (!user) return;
+    const fetchData = async () => {
+      try {
+        const { data: trades } = await supabase
+          .from('trade_history')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(10);
+        if (trades) setRecentTrades(trades);
+        
+        // As no real goals/rebalance/portfolio tables exist yet in supabase types, use clean empty states
+        setGoals([]);
+        setRebalanceData([]);
+        setPortfolio({ cash: 0, equity: 0, mutualFunds: 0, gold: 0, crypto: 0, silver: 0, bonds: 0 });
+      } catch(e) { console.error(e); }
+    };
+    fetchData();
+  }, [user]);
+
+  const handleAskAI = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Asking AI:", aiQuery);
+    setAiQuery('');
+  };
+
+  const handleRebalance = () => {
+    console.log("Review Proposed Trades");
+  };
 
   const handleQuickTrade = async (action: 'BUY' | 'SELL') => {
     if (!user || !tradeAsset || !tradeAmount) return;
     setIsTrading(true);
     try {
       await insertAppData({
-        user_id: user.uid,
+        user_id: user.id,
         type: action,
         asset: tradeAsset,
         amount: Number(tradeAmount),
@@ -112,7 +80,7 @@ export function Dashboard() {
   };
 
   
-  const pieData = Object.entries(mockPortfolio)
+  const pieData = Object.entries(portfolio || {})
     .filter(([key, val]) => key !== 'totalNetWorth' && typeof val === 'number' && val > 0)
     .map(([key, val]) => ({
       name: key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim(),
@@ -121,7 +89,7 @@ export function Dashboard() {
     .sort((a, b) => b.value - a.value);
 
   const total = pieData.reduce((acc, curr) => acc + curr.value, 0);
-  const chartData = React.useMemo(() => generateNetWorthData(heroPeriod, total), [heroPeriod, total]);
+  const chartData: any[] = [];
 
   const LiveBadge = () => (
     <div className="flex items-center gap-1.5 px-2 py-0.5 bg-white/5 rounded border border-white/10">
@@ -320,7 +288,7 @@ export function Dashboard() {
                 );
               })}
             </div>
-            <button className="w-full mt-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-md text-[12px] font-medium hover:bg-primary hover:text-white transition-colors shrink-0">
+            <button onClick={handleRebalance} className="w-full mt-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-md text-[12px] font-medium hover:bg-primary hover:text-white transition-colors shrink-0">
               Review Proposed Trades
             </button>
           </Card>
@@ -393,7 +361,7 @@ export function Dashboard() {
           transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.25 }}
         >
           <Card className="h-full flex flex-col p-4">
-            <SectionHeader title="Recent Activity" action={<button className="text-[11px] text-primary hover:underline">View all</button>} />
+            <SectionHeader title="Recent Activity" action={<button onClick={() => navigate('/trades')} className="text-[11px] text-primary hover:underline">View all</button>} />
             <div className="mt-1 flex-1 overflow-y-auto scrollbar-hide -mx-2 min-h-0">
               <table className="w-full text-left border-collapse">
                 <thead className="sticky top-0 bg-surface z-10">
@@ -431,7 +399,7 @@ export function Dashboard() {
           transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.3 }}
         >
           <Card className="h-full flex flex-col p-4">
-            <SectionHeader title="Active Goals" action={<button className="text-[11px] text-primary hover:underline">Manage</button>} />
+            <SectionHeader title="Active Goals" action={<button onClick={() => navigate('/goals')} className="text-[11px] text-primary hover:underline">Manage</button>} />
             <div className="mt-1 flex-1 flex flex-col gap-2 overflow-y-auto scrollbar-hide min-h-0 pr-1">
               {goals.map(goal => {
                 const percent = Math.min(100, Math.round((goal.current / goal.target) * 100));

@@ -36,7 +36,7 @@ function DataExportWrapper() {
 function AppContent() {
   const { user, loading } = useAuth();
   const [privacyToggleRender, setPrivacyToggleRender] = useState(0);
-  const [hasEntered, setHasEntered] = useState(false);
+  const [hasEntered, setHasEntered] = useState(true);
 
   useEffect(() => {
     const handlePrivacyToggle = () => setPrivacyToggleRender(prev => prev + 1);
@@ -48,9 +48,7 @@ function AppContent() {
     return <div className="min-h-screen bg-base flex items-center justify-center">Loading...</div>;
   }
 
-  if (!user) {
-    return <Login />;
-  }
+  
 
   if (!hasEntered) {
     return <LandingPage onEnter={() => setHasEntered(true)} />;
