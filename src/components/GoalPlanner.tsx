@@ -10,9 +10,9 @@ export function GoalPlanner() {
 
   useEffect(() => {
     fetch('/api/goals')
-      .then(res => res.json())
+      .then(res => res.headers.get('content-type')?.includes('application/json') ? res.json() : null)
       .then(data => {
-        setGoals(data);
+        if (data) setGoals(data);
         setIsLoading(false);
       })
       .catch(console.error);
@@ -26,9 +26,11 @@ export function GoalPlanner() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: 'New Vacation Fund', target: 500000, monthlySip: 10000, year: 2026 })
       });
-      const data = await res.json();
-      if (res.ok) {
-        setGoals(data.goals);
+      if (res.headers.get('content-type')?.includes('application/json')) {
+        const data = await res.json();
+        if (res.ok) {
+          setGoals(data.goals);
+        }
       }
     } catch (e) {
       console.error(e);

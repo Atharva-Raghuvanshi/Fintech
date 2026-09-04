@@ -103,8 +103,12 @@ function TaxOptimizerTab() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
-      const data = await res.json();
-      setResult(data);
+      if (res.headers.get('content-type')?.includes('application/json')) {
+        const data = await res.json();
+        setResult(data);
+      } else {
+        throw new Error('Invalid JSON response');
+      }
     } catch (e) {
       console.error(e);
       // Fallback local computation if API fails

@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 import { createClient } from '@supabase/supabase-js';
+import { Database } from '../types/supabase';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -13,7 +14,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase URL and Anon Key must be provided in environment variables.');
 }
 
-export const supabase = createClient(
+export const supabase = createClient<Database>(
   sanitizedUrl,
   supabaseAnonKey || 'placeholder'
 );

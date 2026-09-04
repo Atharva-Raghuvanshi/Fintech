@@ -9,8 +9,8 @@ export function FamilyGraph() {
 
   useEffect(() => {
     fetch('/api/family')
-      .then(res => res.json())
-      .then(data => setFamilyData(data))
+      .then(res => res.headers.get('content-type')?.includes('application/json') ? res.json() : null)
+      .then(data => data && setFamilyData(data))
       .catch(console.error);
   }, []);
 
@@ -18,9 +18,11 @@ export function FamilyGraph() {
     setIsFixing(true);
     try {
       const res = await fetch('/api/family/fix-nominee', { method: 'POST' });
-      const data = await res.json();
-      if (res.ok) {
-        setFamilyData(data.familyData);
+      if (res.headers.get('content-type')?.includes('application/json')) {
+        const data = await res.json();
+        if (res.ok) {
+          setFamilyData(data.familyData);
+        }
       }
     } catch (e) {
       console.error(e);

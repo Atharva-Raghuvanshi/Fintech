@@ -57,7 +57,8 @@ export function GoogleSheetsSync() {
         throw new Error(`Failed to create spreadsheet: ${createRes.statusText}`);
       }
 
-      const createData = await createRes.json();
+      const createData = createRes.headers.get('content-type')?.includes('application/json') ? await createRes.json() : null;
+      if (!createData) throw new Error('Invalid JSON response');
       const spreadsheetId = createData.spreadsheetId;
       const spreadsheetUrl = createData.spreadsheetUrl;
 

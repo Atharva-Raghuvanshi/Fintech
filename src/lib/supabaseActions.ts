@@ -1,6 +1,10 @@
 import { supabase } from './supabase';
+import { Database } from '../types/supabase';
 
-export async function insertAppData(data: any) {
+type TradeInsert = Database['public']['Tables']['trade_history']['Insert'];
+type TradeRow = Database['public']['Tables']['trade_history']['Row'];
+
+export async function insertAppData(data: TradeInsert) {
   const { error } = await supabase
     .from('trade_history')
     .insert([data]);
@@ -11,7 +15,7 @@ export async function insertAppData(data: any) {
   }
 }
 
-export async function fetchAppData() {
+export async function fetchAppData(): Promise<TradeRow[]> {
   const { data, error } = await supabase
     .from('trade_history')
     .select('*')
@@ -22,5 +26,5 @@ export async function fetchAppData() {
     throw error;
   }
   
-  return data;
+  return data || [];
 }

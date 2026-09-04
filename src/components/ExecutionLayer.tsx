@@ -90,10 +90,10 @@ export function ExecutionLayer() {
       if (snap.exists()) setPortfolio(snap.data() as Portfolio);
       else {
         // Initialize from mock if not exists
-        fetch("/api/portfolio").then(r => r.json()).then(data => setPortfolio(data));
+        fetch("/api/portfolio").then(r => r.headers.get('content-type')?.includes('application/json') ? r.json() : null).then(data => data && setPortfolio(data));
       }
     });
-    fetch("/api/audit-log").then(res => res.json()).then(data => setAuditLog(data));
+    fetch("/api/audit-log").then(res => res.headers.get('content-type')?.includes('application/json') ? res.json() : null).then(data => data && setAuditLog(data));
     return () => unsub();
   }, [user]);
 
